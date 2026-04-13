@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: bitcoin-dashboard
+
+  # application-secret.yml 파일을 추가로 읽어오도록 설정
+  profiles:
+    include: secret 
+
+  # Web/MVC 설정은 Spring Boot 자동 구성을 기본으로 사용하되 필요시 여기에 추가
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+  # 데이터베이스 연결 기본 설정 (인증 정보는 secret에 분리)
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    # url, username, password는 application-secret.yml에서 주입됩니다.
+
+  # JPA 설정
+  jpa:
+    hibernate:
+      # 개발용으로 엔티티 수정에 따라 DB 구조를 자동 업데이트합니다 (운영 배포 시 validate 등으로 변경 필요)
+      ddl-auto: update 
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MariaDBDialect
+        highlight_sql: true
+
+# 백엔드 서버 포트
+server:
+  port: 8080
