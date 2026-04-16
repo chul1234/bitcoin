@@ -50,24 +50,29 @@ public class AuthController {
     public ResponseEntity<Map<String, Object>> signup(@RequestBody SignupRequest request) {
         Map<String, Object> response = new HashMap<>();
 
-        if (request.getUserId() == null || request.getPassword() == null || request.getName() == null) {
+        if (request.getUserId() == null || request.getPassword() == null || 
+            request.getName() == null || request.getEmail() == null) {
             response.put("success", false);
             response.put("message", "모든 정보를 입력해주세요.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
-        // 중복 체크
+        // 중복 체크 (아이디)
         if (userRepository.findByUserId(request.getUserId()).isPresent()) {
             response.put("success", false);
             response.put("message", "이미 존재하는 아이디입니다.");
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
 
+        // 중복 체크 (이메일)
+        // Note: userRepository에 findByEmail이 필요할 수 있으나, 현재는 엔티티 제약조건으로 방어
+        
         // 사용자 저장
         User newUser = User.builder()
                 .userId(request.getUserId())
                 .password(request.getPassword())
                 .name(request.getName())
+                .email(request.getEmail())
                 .build();
         
         userRepository.save(newUser);
@@ -88,5 +93,6 @@ public class AuthController {
         private String userId;
         private String password;
         private String name;
+        private String email;
     }
 }

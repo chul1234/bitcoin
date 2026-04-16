@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const userId = document.getElementById('regUserId').value.trim();
         const password = document.getElementById('regUserPw').value.trim();
         const name = document.getElementById('regUserName').value.trim();
+        const email = document.getElementById('regUserEmail').value.trim();
 
         signupBtn.disabled = true;
         signupBtn.innerText = '처리 중...';
@@ -47,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/api/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, password, name })
+                body: JSON.stringify({ userId, password, name, email })
             });
 
             const data = await response.json();
