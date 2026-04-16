@@ -2,7 +2,6 @@ package coinproject.coin.controller;
 
 import coinproject.coin.entity.User;
 import coinproject.coin.repository.UserRepository;
-import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -82,17 +81,29 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @Data
     public static class LoginRequest {
         private String id;
         private String password;
+
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
     }
 
-    @Data
     public static class SignupRequest {
         private String userId;
         private String password;
         private String name;
         private String email;
+
+        public String getUserId() { return userId; }
+        public void setUserId(String userId) { this.userId = userId; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
     }
 }
