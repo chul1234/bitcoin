@@ -1,68 +1,122 @@
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
     const loginBtn = document.getElementById('login-btn');
+    const signupBtn = document.getElementById('signup-btn');
     const alertBox = document.getElementById('alert-box');
-    const userIdInput = document.getElementById('userId');
-    const userPwInput = document.getElementById('userPw');
-    const welcomeText = document.getElementById('welcome-text');
-
+    const signupAlertBox = document.getElementById('signup-alert-box');
+    
+    // Screens
     const loginScreen = document.getElementById('login-screen');
+    const signupScreen = document.getElementById('signup-screen');
     const introScreen = document.getElementById('intro-screen');
 
-    // 로그인 폼 제출 이벤트
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); // 페이지 새로고침 방지 (SPA 방식)
+    // Navigation toggles
+    document.getElementById('to-signup').addEventListener('click', (e) => {
+        e.preventDefault();
+        loginScreen.classList.remove('view-active');
+        loginScreen.classList.add('hidden');
+        signupScreen.classList.remove('hidden');
+        signupScreen.classList.add('view-active');
+    });
 
-        const id = userIdInput.value.trim();
-        const pw = userPwInput.value.trim();
+    document.getElementById('to-login').addEventListener('click', (e) => {
+        e.preventDefault();
+        signupScreen.classList.remove('view-active');
+        signupScreen.classList.add('hidden');
+        loginScreen.classList.remove('hidden');
+        loginScreen.classList.add('view-active');
+    });
 
-        if(!id || !pw) return;
+    document.getElementById('back-to-login').addEventListener('click', () => {
+        document.getElementById('to-login').click();
+    });
 
-        // 3. 중복 방지 (Throttling / Disable) - 버튼을 클릭하면 즉시 비활성화하여 다중 클릭 방어
-        loginBtn.disabled = true;
-        loginBtn.innerText = '인증 중...';
-        alertBox.classList.add('hidden'); // 기존 에러 숨기기
+    // 회원가입 제출 이벤트
+    signupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userId = document.getElementById('regUserId').value.trim();
+        const password = document.getElementById('regUserPw').value.trim();
+        const name = document.getElementById('regUserName').value.trim();
+
+        signupBtn.disabled = true;
+        signupBtn.innerText = '처리 중...';
+        signupAlertBox.classList.add('hidden');
 
         try {
-            // 스프링 부트 AuthController.java 와 직접 연동!
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch('/api/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: id, password: pw })
+                body: JSON.stringify({ userId, password, name })
             });
 
             const data = await response.json();
 
             if (response.ok && data.success) {
-                // 로그인 성공 시 스크린 전환 마이크로 애니메이션
+                // 회원가입 성공 시 즉시 로그인 화면으로 전환
+                signupScreen.classList.remove('view-active');
+                signupScreen.classList.add('hidden');
+                loginScreen.classList.remove('hidden');
+                loginScreen.classList.add('view-active');
+                
+                // 로그인 화면의 알림창에 성공 메시지 표시
+                alertBox.innerText = '회원가입이 완료되었습니다. 로그인해 주세요.';
+                alertBox.classList.remove('hidden');
+                alertBox.style.backgroundColor = 'rgba(79, 70, 229, 0.1)';
+                alertBox.style.color = 'var(--accent-color)';
+                alertBox.style.borderColor = 'rgba(79, 70, 229, 0.2)';
+            } else {
+                showError(signupAlertBox, data.message || '회원가입에 실패했습니다.');
+            }
+        } catch (error) {
+            showError(signupAlertBox, '서버와의 통신에 실패했습니다.');
+        } finally {
+            signupBtn.disabled = false;
+            signupBtn.innerText = '가입하기';
+        }
+    });
+
+    // 로그인 폼 제출 이벤트
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('userId').value.trim();
+        const pw = document.getElementById('userPw').value.trim();
+
+        loginBtn.disabled = true;
+        loginBtn.innerText = '인증 중...';
+        alertBox.classList.add('hidden');
+
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, password: pw })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
                 loginScreen.classList.remove('view-active');
                 loginScreen.classList.add('hidden');
                 
-                // 4. 로그인 후 나오는 간단 인트로 화면 표시
                 setTimeout(() => {
-                    welcomeText.innerText = `${id} 님 환영합니다!`;
+                    document.getElementById('welcome-text').innerText = `${data.userName || id} 님 환영합니다!`;
                     introScreen.classList.remove('hidden');
                     introScreen.classList.add('view-active');
-                    
-                    // 향후 (내일 이후) 이 곳에서 3초 뒤 진짜 대시보드 화면으로 넘어가게 구현
-                }, 600); // 이전 화면이 페이드아웃 된 후 0.6초 뒤 시작
-                
+                }, 600);
             } else {
-                // 2. 로그인 틀렸을 경우 알림 (백엔드 에러 메시지 렌더링)
-                showError(data.message || '아이디 또는 비밀번호가 잘못되었습니다.');
+                showError(alertBox, data.message || '아이디 또는 비밀번호가 잘못되었습니다.');
             }
         } catch (error) {
-            showError('서버와의 통신에 실패했습니다. (Spring Boot 서버를 켜주세요)');
+            showError(alertBox, '서버와의 통신에 실패했습니다.');
         } finally {
-            // 결과와 상관없이 버튼은 다시 활성화 (성공시엔 뷰가 사라져서 안보임)
             loginBtn.disabled = false;
             loginBtn.innerText = '로그인';
         }
     });
 
-    function showError(message) {
-        alertBox.innerText = message;
-        alertBox.classList.remove('hidden');
-        // 부드럽게 강조하기 위해 간단한 흔들림/에러 하이라이트 애니메이션 추가 가능
+    function showError(element, message) {
+        element.innerText = message;
+        element.classList.remove('hidden');
     }
 });

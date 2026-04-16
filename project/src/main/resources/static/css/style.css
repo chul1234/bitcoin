@@ -181,7 +181,21 @@ body {
     animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+/* 추가: 뒤로가기 버튼 스타일 */
+.back-link-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0;
+    margin-bottom: 1rem;
+    transition: color 0.2s;
+}
+
+.back-link-btn:hover {
+    color: var(--text-main);
 }
