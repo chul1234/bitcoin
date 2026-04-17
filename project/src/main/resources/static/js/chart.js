@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let chart = null;
     let candlestickSeries = null;
     let priceInterval = null;
+    let currentMarket = 'KRW-BTC';
 
     initDashboard();
 
@@ -95,8 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchHistoricalData() {
         try {
             document.getElementById('live-price').innerText = '데이터 다운중...';
-            // 업비트 공개 API: 1분봉 200개 반환 (로그인/키 불필요)
-            const response = await fetch('https://api.upbit.com/v1/candles/minutes/1?market=KRW-BTC&count=200');
+            // 선택된 코인의 1분봉 200개 반환
+            const response = await fetch(`https://api.upbit.com/v1/candles/minutes/1?market=${currentMarket}&count=200`);
             const data = await response.json();
             
             // TradingView Lightweight Charts 규칙: 완벽하게 중복 없는 00초 시간대 사용
@@ -121,8 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchLivePrice() {
         try {
-            // 업비트 공개 API: 현재가 정보 (로그인/키 불필요)
-            const response = await fetch('https://api.upbit.com/v1/ticker?markets=KRW-BTC');
+            // 선택된 코인의 현재가 정보
+            const response = await fetch(`https://api.upbit.com/v1/ticker?markets=${currentMarket}`);
             const data = await response.json();
             const ticker = data[0];
 
@@ -160,6 +161,28 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('현재가 갱신 실패:', error);
         }
     }
+
+    // 외부(coinList.js)에서 코인을 클릭했을 때 호출할 수 있는 전역 함수
+    window.changeMarket = async function(marketCode, koreanName) {
+        if (currentMarket === marketCode) return;
+        
+        currentMarket = marketCode;
+        
+        // 1. 차트 헤더 정보 업데이트
+        const nameEl = document.getElementById('display-coin-name');
+        const symEl = document.getElementById('display-coin-symbol');
+        if (nameEl) nameEl.innerText = koreanName;
+        if (symEl) symEl.innerText = marketCode;
+        
+        // 2. 차트 기존 데이터 비우기 (로딩 체감)
+        candlestickSeries.setData([]);
+        document.getElementById('live-price').innerText = '데이터 불러오는 중...';
+
+        // 3. 인터벌 초기화 및 기존 흐름 재가동
+        if (priceInterval) clearInterval(priceInterval);
+        await fetchHistoricalData();
+        priceInterval = setInterval(fetchLivePrice, 1000);
+    };
 
     // 로그아웃 버튼 이벤트 (로그인 페이지로 돌아가기)
     document.getElementById('logout-btn').addEventListener('click', () => {

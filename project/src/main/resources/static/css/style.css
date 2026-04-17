@@ -211,12 +211,12 @@ body {
     width: 100%;
     height: 100vh;
     display: grid;
-    /* 1단계에서는 사이드바(80px)와 메인(나머지 전부)만 사용 */
-    grid-template-columns: 80px 1fr; 
+    /* 1단계(차트), 2단계: 네비(80px) | 코인목록(320px) | 메인 | 우측(예정) */
+    grid-template-columns: 80px 320px 1fr; 
     overflow: hidden;
 }
 
-/* 사이드바 스타일 */
+/* 좌측 사이드바 */
 .sidebar {
     background-color: #111827;
     border-right: 1px solid rgba(255, 255, 255, 0.05);
@@ -264,13 +264,140 @@ body {
     transform: translateY(-2px);
 }
 
-/* 메인 대시보드 중앙(차트) */
-.main-content {
+/* ==========================================================================
+   2단계: 좌측 코인 목록 패널 (Left Panel)
+   ========================================================================== */
+.trading-layout {
+    display: contents; /* Grid columns from dashboard-layout apply to children */
+}
+
+.coin-list-panel {
+    background-color: #0F172A;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.panel-header {
+    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.panel-header h2 {
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* 검색창 영역 */
+.search-box {
+    padding: 0 1.5rem 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.search-input {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.search-input::placeholder {
+    color: rgba(148, 163, 184, 0.6);
+}
+
+.coin-list-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+/* 스크롤바 커스텀 */
+.coin-list-container::-webkit-scrollbar { width: 6px; }
+.coin-list-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+.coin-list-container::-webkit-scrollbar-track { background: transparent; }
+
+/* 코인 아이템 리스트 */
+.coin-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-bottom: 0.25rem;
+}
+
+.coin-item:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.coin-item.active {
+    background-color: rgba(79, 70, 229, 0.15);
+    border-left: 3px solid var(--accent-color);
+}
+
+.coin-item-left {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.coin-item-name {
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.9rem;
+}
+
+.coin-item-symbol {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.coin-item-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.coin-item-price {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-main);
+    font-family: 'Inter Tight', sans-serif;
+}
+
+.coin-item-change {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.coin-item-change.positive { color: #EF4444; } /* 한국 업비트 상승: 빨강 */
+.coin-item-change.negative { color: #4F46E5; } /* 하락: 파랑 */
+.coin-item-change.zero { color: var(--text-muted); }
+
+/* ==========================================================================
+   메인 대시보드 중앙(차트 패널)
+   ========================================================================== */
+.chart-panel {
     display: flex;
     flex-direction: column;
     padding: 1.5rem;
     gap: 1rem;
-    position: relative;
+    height: 100vh;
+    background-color: #020617;
 }
 
 .main-header {

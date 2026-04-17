@@ -25,26 +25,53 @@
                 </div>
             </aside>
 
-            <!-- 메인 차트 영역 -->
-            <main class="main-content">
-                <header class="main-header">
-                    <div class="coin-info">
-                        <span class="coin-name" id="display-coin-name">Bitcoin</span>
-                        <span class="coin-symbol">KRW-BTC</span>
+            <!-- 메인 트레이딩 레이아웃 (3단 분할 대비) -->
+            <div class="trading-layout">
+                
+                <!-- 좌측 코인 목록 패널 (2단계) -->
+                <aside class="coin-list-panel">
+                    <div class="panel-header">
+                        <h2>원화(KRW) 마켓</h2>
                     </div>
-                    <div class="current-price-group">
-                        <span id="live-price" class="price-value">로딩 중...</span>
-                        <span id="price-change" class="price-change">0.00%</span>
+                    <!-- 신규: 코인 검색 영역 -->
+                    <div class="search-box">
+                        <input type="text" id="coin-search-input" class="search-input" placeholder="코인명 또는 심볼 검색" autocomplete="off">
                     </div>
-                </header>
-                <div id="chart-container" class="chart-wrapper">
-                    <!-- 차트가 여기에 렌더링됩니다 -->
-                </div>
-            </main>
+                    <!-- coinList.js가 이곳에 코인 항목들을 렌더링함 -->
+                    <div class="coin-list-container" id="coin-list-container">
+                        <div style="text-align:center; padding:2rem; color:var(--text-muted);">
+                            로딩 중...
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- 중앙 차트 패널 -->
+                <main class="chart-panel">
+                    <header class="main-header">
+                        <div class="coin-info">
+                            <span class="coin-name" id="display-coin-name">비트코인</span>
+                            <span class="coin-symbol" id="display-coin-symbol">KRW-BTC</span>
+                        </div>
+                        <div class="current-price-group">
+                            <span id="live-price" class="price-value">로딩 중...</span>
+                            <span id="price-change" class="price-change">0.00%</span>
+                        </div>
+                    </header>
+                    <div id="chart-container" class="chart-wrapper">
+                        <!-- 차트가 여기에 렌더링됩니다 -->
+                    </div>
+                    
+                    <!-- 호가창이 들어갈 임시 자리 (추후 구현) -->
+                    <div id="orderbook-placeholder" style="display:none;"></div>
+                </main>
+                
+                <!-- 우측 매수/매도 시스템 패널은 현재 보이지 않게 처리 (추후 구현) -->
+            </div>
         </div>
     </div>
 
-    <!-- 차트 전용 스크립트 연결 (캐시 무효화 추가) -->
-    <script src="js/chart.js?v=2"></script>
+    <!-- 차트 및 리스트 스크립트 (캐시 무효화 포함) -->
+    <script src="js/chart.js?v=4"></script>
+    <script src="js/coinList.js?v=1"></script>
 </body>
 </html>
