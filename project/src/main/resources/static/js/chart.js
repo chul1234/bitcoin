@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let candlestickSeries = null;
     let priceInterval = null;
     let currentMarket = 'KRW-BTC';
+    let lastCandle = null; // 마지막 분봉 데이터를 추적하여 실시간 1분봉 OHLC를 직접 계산
 
     initDashboard();
 
@@ -114,6 +115,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 데이터 세팅
             candlestickSeries.setData(formattedData);
+            
+            // 마지막 캔들을 저장하여 이후 실시간 갱신(fetchLivePrice)의 기준값으로 사용
+            if (formattedData.length > 0) {
+                // 객체 복사로 참조 분리
+                lastCandle = { ...formattedData[formattedData.length - 1] };
+            }
         } catch (error) {
             console.error('차트 데이터 로드 실패:', error);
             document.getElementById('live-price').innerText = '데이터 오류';
@@ -146,17 +153,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 2. 차트 마지막 캔들 갱신
-            // 무조건 현재 시점의 '분(Minute)' 단위에 맞춰서 마지막 꼬리를 통일되게 움직임
             const tsSeconds = Math.floor(ticker.timestamp / 1000);
             const currentMinuteTime = tsSeconds - (tsSeconds % 60);
 
-            candlestickSeries.update({
-                time: currentMinuteTime, 
-                open: ticker.opening_price,     // (주의: 당일 시가이므로 실제 분봉 시가와 다를 수 있으나 현재가 갱신용으로 테스트)
-                high: Math.max(ticker.trade_price, ticker.high_price), 
-                low: Math.min(ticker.trade_price, ticker.low_price),
-                close: ticker.trade_price
-            });
+            if (lastCandle && lastCandle.time === currentMinuteTime) {
+                // 아직 1분이 지나지 않았다면, 고가/저가/종가만 실시간 누적 갱신 (시가는 고정)
+                lastCandle.high = Math.max(lastCandle.high, ticker.trade_price);
+                lastCandle.low = Math.min(lastCandle.low, ticker.trade_price);
+                lastCandle.close = ticker.trade_price;
+            } else {
+                // 새로운 1분이 시작되었다면, 지금까지의 가격을 버리고 새로운 캔들(OHLC) 시작
+                lastCandle = {
+                    time: currentMinuteTime,
+                    open: ticker.trade_price, // 새로운 봉의 시작 가격
+                    high: ticker.trade_price,
+                    low: ticker.trade_price,
+                    close: ticker.trade_price
+                };
+            }
+
+            // TradingView 차트에 업데이트
+            candlestickSeries.update(lastCandle);
         } catch (error) {
             console.error('현재가 갱신 실패:', error);
         }
