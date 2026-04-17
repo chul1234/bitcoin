@@ -104,6 +104,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('welcome-text').innerText = `${data.userName || id} 님 환영합니다!`;
                     introScreen.classList.remove('hidden');
                     introScreen.classList.add('view-active');
+                    
+                    // 1.5초 후 대시보드 페이지로 이동
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1500);
+
                 }, 600);
             } else {
                 showError(alertBox, data.message || '아이디 또는 비밀번호가 잘못되었습니다.');

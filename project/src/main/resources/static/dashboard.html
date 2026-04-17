@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가상 투자 대시보드</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- TradingView Lightweight Charts (버전 4.1.1로 고정하여 호환성 문제 완벽 해결) -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+    <div id="dashboard-screen" class="screen view-active">
+        <div class="dashboard-layout">
+            <!-- 좌측 사이드바 -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <span class="logo-text">CD</span>
+                </div>
+                <nav class="nav-menu">
+                    <button class="nav-item active" title="차트"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
+                </nav>
+                <div class="sidebar-footer">
+                    <button id="logout-btn" class="nav-item" title="로그아웃"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+                </div>
+            </aside>
+
+            <!-- 메인 차트 영역 -->
+            <main class="main-content">
+                <header class="main-header">
+                    <div class="coin-info">
+                        <span class="coin-name" id="display-coin-name">Bitcoin</span>
+                        <span class="coin-symbol">KRW-BTC</span>
+                    </div>
+                    <div class="current-price-group">
+                        <span id="live-price" class="price-value">로딩 중...</span>
+                        <span id="price-change" class="price-change">0.00%</span>
+                    </div>
+                </header>
+                <div id="chart-container" class="chart-wrapper">
+                    <!-- 차트가 여기에 렌더링됩니다 -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 차트 전용 스크립트 연결 (캐시 무효화 추가) -->
+    <script src="js/chart.js?v=2"></script>
+</body>
+</html>
