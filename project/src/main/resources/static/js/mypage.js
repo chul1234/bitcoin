@@ -133,7 +133,16 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (currentEditField === 'password') {
             const val = document.getElementById('modal-input-password').value.trim();
             const confirmVal = document.getElementById('modal-input-password-confirm').value.trim();
+            
             if (!val) { showError(alertBox, "비밀번호를 입력해주세요."); return; }
+            
+            // 비밀번호 유효성 검사 (8자 이상, 특수문자 1개 이상)
+            const pwRegex = /^(?=.*[^a-zA-Z0-9]).{8,}$/;
+            if (!pwRegex.test(val)) {
+                showError(alertBox, "비밀번호는 8자 이상이며 최소 1개의 특수문자를 포함해야 합니다.");
+                return;
+            }
+            
             if (val !== confirmVal) {
                 showError(alertBox, "비밀번호와 비밀번호 확인이 일치하지 않습니다.");
                 return;

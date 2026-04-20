@@ -44,6 +44,15 @@ document.addEventListener('DOMContentLoaded', () => {
         signupBtn.innerText = '처리 중...';
         signupAlertBox.classList.add('hidden');
 
+        // 비밀번호 유효성 검사 (8자 이상, 특수문자 포함)
+        const pwRegex = /^(?=.*[^a-zA-Z0-9]).{8,}$/;
+        if (!pwRegex.test(password)) {
+            showError(signupAlertBox, "비밀번호는 8자 이상이어야 하며, 특수문자를 최소 1개 포함해야 합니다.");
+            signupBtn.disabled = false;
+            signupBtn.innerText = '가입하기';
+            return;
+        }
+
         try {
             const response = await fetch('/api/auth/signup', {
                 method: 'POST',
