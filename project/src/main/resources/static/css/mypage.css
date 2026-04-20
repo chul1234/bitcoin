@@ -1,0 +1,103 @@
+/* ==========================================================================
+   마이페이지 전용 스타일
+   ========================================================================== */
+
+.profile-container {
+    flex: 1;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    background-color: var(--bg-color);
+    overflow-y: auto;
+}
+
+.profile-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 2rem;
+}
+
+.profile-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 0.5rem;
+}
+
+.profile-header p {
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+.info-card {
+    background-color: var(--card-bg);
+    border-radius: 16px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    max-width: 600px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-label {
+    color: var(--text-muted);
+    font-weight: 500;
+    width: 150px;
+}
+
+.info-value {
+    color: var(--text-main);
+    font-weight: 600;
+    flex: 1;
+    text-align: right;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    max-width: 600px;
+}
+
+.btn-edit {
+    flex: 1;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    text-decoration: none;
+}
+
+.btn-edit:hover { background-color: var(--accent-hover); }
+
+.btn-delete {
+    flex: 1;
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--error-color);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.btn-delete:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+}

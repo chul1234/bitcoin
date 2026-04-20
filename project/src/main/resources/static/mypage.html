@@ -6,107 +6,7 @@
     <title>마이페이지 - 가상 투자 대시보드</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        .profile-container {
-            flex: 1;
-            padding: 3rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            background-color: var(--bg-color);
-            overflow-y: auto;
-        }
-
-        .profile-header {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            padding-bottom: 2rem;
-        }
-
-        .profile-header h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-main);
-            margin-bottom: 0.5rem;
-        }
-
-        .profile-header p {
-            color: var(--text-muted);
-            font-size: 1rem;
-        }
-
-        .info-card {
-            background-color: var(--card-bg);
-            border-radius: 16px;
-            padding: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            max-width: 600px;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 1.5rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-
-        .info-label {
-            color: var(--text-muted);
-            font-weight: 500;
-            width: 150px;
-        }
-
-        .info-value {
-            color: var(--text-main);
-            font-weight: 600;
-            flex: 1;
-            text-align: right;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-            max-width: 600px;
-        }
-
-        .btn-edit {
-            flex: 1;
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 1rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-            text-decoration: none;
-        }
-
-        .btn-edit:hover { background-color: var(--accent-hover); }
-
-        .btn-delete {
-            flex: 1;
-            background-color: rgba(239, 68, 68, 0.1);
-            color: var(--error-color);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            padding: 1rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-        }
-
-        .btn-delete:hover {
-            background-color: rgba(239, 68, 68, 0.2);
-        }
-    </style>
+    <link rel="stylesheet" href="css/mypage.css">
 </head>
 <body>
     <div id="dashboard-screen" class="screen view-active">
@@ -120,6 +20,10 @@
                 <nav class="nav-menu">
                     <button class="nav-item" title="차트 보드" onclick="window.location.href='dashboard.html'">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </button>
+                    <!-- 투자 내역 (포트폴리오) 버튼 -->
+                    <button class="nav-item" title="투자 내역" onclick="window.location.href='investment.html'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
                     </button>
                     <button class="nav-item active" title="마이페이지" onclick="window.location.href='mypage.html'">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -140,7 +44,6 @@
                 <div class="alert-box hidden" id="mypage-alert-box"></div>
 
                 <div class="alert-box hidden" id="mypage-alert-box"></div>
-
                 <div class="info-card">
                     <!-- 이름 -->
                     <div class="info-row">

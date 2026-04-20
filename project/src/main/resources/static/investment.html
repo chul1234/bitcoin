@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비트코인 거래소 - 투자 내역</title>
+    <!-- 폰트 및 아이콘 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter Tight:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js 라이브러리 (원 그래프용) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 공통 스타일시트 및 투자내역 전용 스타일 -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/investment.css">
+</head>
+<body>
+    <!-- 마이페이지와 동일한 그리드 레이아웃 구조 (사이드바 메뉴가 위로 안뜨게 수정) -->
+    <div id="dashboard-screen" class="screen view-active">
+        <div class="dashboard-layout" style="grid-template-columns: 80px 1fr;"> <!-- 좌측 80px 사이드바 강제 고정 -->
+            
+            <!-- 좌측 사이드바 -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <span class="logo-text">CD</span>
+                </div>
+                <nav class="nav-menu">
+                    <!-- 대시보드(차트) 홈 버튼 -->
+                    <button class="nav-item" title="차트 보드" onclick="window.location.href='dashboard.html'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </button>
+                    <!-- 투자 내역 (포트폴리오) 버튼 -->
+                    <button class="nav-item active" title="투자 내역" onclick="window.location.href='investment.html'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                    </button>
+                    <!-- 마이페이지 이동 버튼 -->
+                    <button class="nav-item" title="마이페이지" onclick="window.location.href='mypage.html'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </button>
+                </nav>
+                <div class="sidebar-footer">
+                    <button id="logout-btn" class="nav-item" title="로그아웃"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+                </div>
+            </aside>
+
+            <!-- 메인 콘텐츠 영역 -->
+            <main class="main-content" style="padding: 3rem; background-color: var(--bg-color); height: 100vh; overflow-y: auto;">
+                <header class="main-header" style="margin-bottom: 2rem;">
+                    <div class="header-left">
+                        <h1 style="color: var(--text-main); font-size: 1.8rem; font-weight: 700;">투자 내역</h1>
+                        <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 1rem;">나의 자산 및 투자 포트폴리오를 확인하세요.</p>
+                    </div>
+                </header>
+
+                <div>
+                    <!-- 자산 요약 대시보드 -->
+                    <div class="portfolio-dashboard" style="max-width: 800px;">
+                        <!-- 보유 자산 (남은 돈) -->
+                        <div class="asset-card">
+                            <span class="asset-label">보유 자산 (현금)</span>
+                            <div class="asset-value">0 <span>KRW</span></div>
+                        </div>
+
+                        <!-- 총 보유 자산 (현금 + 코인 가치) -->
+                        <div class="asset-card">
+                            <span class="asset-label">총 보유 자산</span>
+                            <div class="asset-value">0 <span>KRW</span></div>
+                        </div>
+                    </div>
+
+                    <!-- 포트폴리오 원 그래프 구역 -->
+                    <div class="portfolio-chart-container" style="max-width: 800px;">
+                        <div class="chart-header">
+                            <h3>보유자산 포트폴리오 비중</h3>
+                        </div>
+                        
+                        <div class="chart-wrapper">
+                            <!-- 나중에 기능을 연결할 때 그릴 캔버스 세팅 -->
+                            <canvas id="portfolioChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 공통 로그인 세션 체크 스크립트 연결 -->
+    <script src="js/app.js"></script>
+
+    <!-- 포트폴리오 렌더링용 임시 스크립트 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // [기능: 뼈대 구성용 임시 정적 데이터] 나중에 DB 연동 시 변경!
+            const ctx = document.getElementById('portfolioChart').getContext('2d');
+            
+            // 임시 데이터 (원 그래프)
+            const data = {
+                labels: ['현금 (KRW)', '비트코인 (BTC)', '이더리움 (ETH)', '리플 (XRP)'],
+                datasets: [{
+                    label: '자산 비중',
+                    data: [40, 35, 15, 10], // 임의의 퍼센트 / 금액 등
+                    backgroundColor: [
+                        '#4F46E5', // 현금 - 메인 앱 색상
+                        '#F59E0B', // 비트코인 - 주황
+                        '#6366F1', // 이더리움 - 보라파랑
+                        '#10B981', // 리플 - 초록
+                    ],
+                    borderColor: '#0F172A', // 다크모드 배경색과 맞춰 경계선 구분
+                    borderWidth: 4,
+                    hoverOffset: 10
+                }]
+            };
+
+            const config = {
+                type: 'doughnut', // 도넛형 원 그래프
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%', // 가운데 구멍 크기 조절
+                    plugins: {
+                        legend: {
+                            position: 'right', // 텍스트 범례를 원 그래프 우측에 배치
+                            labels: {
+                                color: '#94A3B8', // 글씨색
+                                padding: 20,
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 14,
+                                    weight: '500'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 14, weight: 'bold' },
+                            padding: 12,
+                            cornerRadius: 8,
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            };
+
+            new Chart(ctx, config);
+        });
+    </script>
+</body>
+</html>
