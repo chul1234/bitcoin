@@ -97,6 +97,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (response.ok && data.success) {
+                // 로그인 성공 시 세션 스토리지에 유저 식별자 저장
+                sessionStorage.setItem('loggedInUserId', id);
+                sessionStorage.setItem('loggedInUserName', data.userName || id);
+
                 loginScreen.classList.remove('view-active');
                 loginScreen.classList.add('hidden');
                 

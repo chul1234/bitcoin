@@ -18,7 +18,14 @@
                     <span class="logo-text">CD</span>
                 </div>
                 <nav class="nav-menu">
-                    <button class="nav-item active" title="차트"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
+                    <!-- 대시보드(차트) 홈 버튼 -->
+                    <button class="nav-item active" title="차트 보드" onclick="window.location.href='dashboard.html'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </button>
+                    <!-- 마이페이지 이동 버튼 -->
+                    <button class="nav-item" title="마이페이지" onclick="window.location.href='mypage.html'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </button>
                 </nav>
                 <div class="sidebar-footer">
                     <button id="logout-btn" class="nav-item" title="로그아웃"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>

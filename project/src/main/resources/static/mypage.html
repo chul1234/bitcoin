@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마이페이지 - 가상 투자 대시보드</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .profile-container {
+            flex: 1;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            background-color: var(--bg-color);
+            overflow-y: auto;
+        }
+
+        .profile-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 2rem;
+        }
+
+        .profile-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .info-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            max-width: 600px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            color: var(--text-muted);
+            font-weight: 500;
+            width: 150px;
+        }
+
+        .info-value {
+            color: var(--text-main);
+            font-weight: 600;
+            flex: 1;
+            text-align: right;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            max-width: 600px;
+        }
+
+        .btn-edit {
+            flex: 1;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-edit:hover { background-color: var(--accent-hover); }
+
+        .btn-delete {
+            flex: 1;
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn-delete:hover {
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div id="dashboard-screen" class="screen view-active">
+        <div class="dashboard-layout" style="grid-template-columns: 80px 1fr;"> <!-- 마이페이지는 코인목록 사이드바 안씀 -->
+            
+            <!-- 좌측 네비게이션 -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <span class="logo-text">CD</span>
+                </div>
+                <nav class="nav-menu">
+                    <button class="nav-item" title="차트 보드" onclick="window.location.href='dashboard.html'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </button>
+                    <button class="nav-item active" title="마이페이지" onclick="window.location.href='mypage.html'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </button>
+                </nav>
+                <div class="sidebar-footer">
+                    <button id="logout-btn" class="nav-item" title="로그아웃"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+                </div>
+            </aside>
+
+            <!-- 마이페이지 콘텐츠 영역 -->
+            <main class="profile-container">
+                <header class="profile-header">
+                    <h1>마이페이지</h1>
+                    <p>내 계정 정보 조회 및 개인정보 수정 관리</p>
+                </header>
+
+                <div class="alert-box hidden" id="mypage-alert-box"></div>
+
+                <div class="info-card">
+                    <div class="info-row">
+                        <span class="info-label">이름</span>
+                        <span class="info-value" id="profile-name">로딩 중...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">아이디</span>
+                        <span class="info-value" id="profile-userid">로딩 중...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">이메일</span>
+                        <span class="info-value" id="profile-email">로딩 중...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">가입 일자</span>
+                        <span class="info-value" id="profile-created">로딩 중...</span>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="edit_profile.html" class="btn-edit">내 정보 수정하기</a>
+                    <button class="btn-delete" id="btn-delete-account">회원 탈퇴</button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 기능 스크립트 연결 -->
+    <script src="js/mypage.js?v=1"></script>
+</body>
+</html>
