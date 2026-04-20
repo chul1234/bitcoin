@@ -77,80 +77,102 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     /* ==========================================================================
-       [2] 정보 수정 로직 (edit_profile.html)
+       [2] 정보 수정 로직 (다이나믹 모달)
        ========================================================================== */
-    const editProfileForm = document.getElementById('edit-profile-form');
-    const btnSaveProfile = document.getElementById('btn-save-profile');
-    const editAlertBox = document.getElementById('edit-alert-box');
+    let currentEditField = null;
 
-    if (editProfileForm) {
-        // 기존 정보를 힌트로 보여주기 위해 정보 로드
-        fillExistingHints();
+    window.openDynamicModal = function(field) {
+        currentEditField = field;
+        const overlay = document.getElementById('dynamic-modal-overlay');
+        const title = document.getElementById('modal-title');
+        const container = document.getElementById('modal-input-container');
+        const alertBox = document.getElementById('modal-alert-box');
+        
+        if(alertBox) alertBox.classList.add('hidden');
+        container.innerHTML = '';
 
-        editProfileForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const newUserId = document.getElementById('editUserId').value.trim();
-            const password = document.getElementById('editPassword').value.trim();
-            const email = document.getElementById('editEmail').value.trim();
+        if (field === 'userid') {
+            title.innerText = '아이디 수정';
+            container.innerHTML = `
+                <div style="margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">새로운 아이디를 입력해주세요.</div>
+                <input type="text" id="modal-input-userid" class="modal-input" placeholder="새로운 아이디 입력" autocomplete="off">
+            `;
+        } else if (field === 'password') {
+            title.innerText = '비밀번호 수정';
+            container.innerHTML = `
+                <div style="margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">새로운 비밀번호를 입력해주세요.</div>
+                <input type="password" id="modal-input-password" class="modal-input" placeholder="8자 이상 입력" autocomplete="new-password">
+                <input type="password" id="modal-input-password-confirm" class="modal-input" placeholder="비밀번호 재입력" autocomplete="new-password" style="margin-top: 0.5rem;">
+            `;
+        } else if (field === 'email') {
+            title.innerText = '이메일 수정';
+            container.innerHTML = `
+                <div style="margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">새로운 이메일 주소를 입력해주세요.</div>
+                <input type="email" id="modal-input-email" class="modal-input" placeholder="새로운 이메일 입력" autocomplete="email">
+            `;
+        }
 
-            // 백엔드로 보낼 객체 구성 (값이 있는 것만 보냄)
-            const updatePayload = {};
-            if (newUserId) updatePayload.newUserId = newUserId;
-            if (password) updatePayload.password = password;
-            if (email) updatePayload.email = email;
+        overlay.classList.remove('hidden');
+    };
 
-            if (Object.keys(updatePayload).length === 0) {
-                showError(editAlertBox, "수정할 항목을 하나 이상 입력해주세요.");
+    window.closeDynamicModal = function() {
+        document.getElementById('dynamic-modal-overlay').classList.add('hidden');
+        currentEditField = null;
+    };
+
+    window.saveDynamicModal = async function() {
+        if (!currentEditField) return;
+        
+        const updatePayload = {};
+        const alertBox = document.getElementById('modal-alert-box');
+        
+        if (currentEditField === 'userid') {
+            const val = document.getElementById('modal-input-userid').value.trim();
+            if (!val) { showError(alertBox, "아이디를 입력해주세요."); return; }
+            updatePayload.newUserId = val;
+        } else if (currentEditField === 'password') {
+            const val = document.getElementById('modal-input-password').value.trim();
+            const confirmVal = document.getElementById('modal-input-password-confirm').value.trim();
+            if (!val) { showError(alertBox, "비밀번호를 입력해주세요."); return; }
+            if (val !== confirmVal) {
+                showError(alertBox, "비밀번호와 비밀번호 확인이 일치하지 않습니다.");
                 return;
             }
+            updatePayload.password = val;
+        } else if (currentEditField === 'email') {
+            const val = document.getElementById('modal-input-email').value.trim();
+            if (!val) { showError(alertBox, "이메일을 입력해주세요."); return; }
+            updatePayload.email = val;
+        }
 
-            btnSaveProfile.disabled = true;
-            btnSaveProfile.innerText = "저장 중...";
-            editAlertBox.classList.add('hidden');
+        alertBox.classList.add('hidden');
 
-            try {
-                const response = await fetch(`/api/user/${loggedInUserId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updatePayload)
-                });
-                
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    alert("정보 수정이 완료되었습니다.");
-                    
-                    // 만약 아이디가 변경되었다면, 세션 스토리지 식별자도 업데이트해야 함
-                    if (data.newUserId && data.newUserId !== loggedInUserId) {
-                        sessionStorage.setItem('loggedInUserId', data.newUserId);
-                    }
-                    
-                    // 완료 후 마이페이지로 이동
-                    window.location.href = "mypage.html";
-                } else {
-                    showError(editAlertBox, data.message || "정보 수정에 실패했습니다.");
-                }
-            } catch (error) {
-                showError(editAlertBox, "서버와의 통신에 실패했습니다.");
-            } finally {
-                btnSaveProfile.disabled = false;
-                btnSaveProfile.innerText = "변경사항 저장";
-            }
-        });
-    }
-
-    async function fillExistingHints() {
         try {
-            const response = await fetch(`/api/user/${loggedInUserId}`);
+            const response = await fetch(`/api/user/${loggedInUserId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatePayload)
+            });
+            
             const data = await response.json();
-            if (response.ok && data.success) {
-                document.getElementById('editUserId').placeholder = `현재 아이디: ${data.userId}`;
-                document.getElementById('editEmail').placeholder = `현재 이메일: ${data.email}`;
-            }
-        } catch (ignored) {}
-    }
 
+            if (response.ok && data.success) {
+                alert("성공적으로 변경되었습니다.");
+                
+                // 아이디 변경 시 세션 식별자 업데이트
+                if (data.newUserId && data.newUserId !== loggedInUserId) {
+                    sessionStorage.setItem('loggedInUserId', data.newUserId);
+                }
+                
+                closeDynamicModal();
+                window.location.reload();
+            } else {
+                showError(alertBox, data.message || "수정에 실패했습니다.");
+            }
+        } catch (error) {
+            showError(alertBox, "서버와의 통신에 실패했습니다.");
+        }
+    };
 
     /* ==========================================================================
        [공통] 유틸리티

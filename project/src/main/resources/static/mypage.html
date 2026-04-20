@@ -139,34 +139,85 @@
 
                 <div class="alert-box hidden" id="mypage-alert-box"></div>
 
+                <div class="alert-box hidden" id="mypage-alert-box"></div>
+
                 <div class="info-card">
+                    <!-- 이름 -->
                     <div class="info-row">
-                        <span class="info-label">이름</span>
-                        <span class="info-value" id="profile-name">로딩 중...</span>
+                        <div class="info-row-display">
+                            <span class="info-label">이름</span>
+                            <span class="info-value" id="profile-name">로딩 중...</span>
+                            <button class="btn-inline-edit invisible" disabled>수정</button>
+                        </div>
                     </div>
+
+                    <!-- 아이디 -->
                     <div class="info-row">
-                        <span class="info-label">아이디</span>
-                        <span class="info-value" id="profile-userid">로딩 중...</span>
+                        <div class="info-row-display">
+                            <span class="info-label">아이디</span>
+                            <span class="info-value" id="profile-userid">로딩 중...</span>
+                            <button class="btn-inline-edit" onclick="openDynamicModal('userid')">수정</button>
+                        </div>
                     </div>
+
+                    <!-- 비밀번호 -->
                     <div class="info-row">
-                        <span class="info-label">이메일</span>
-                        <span class="info-value" id="profile-email">로딩 중...</span>
+                        <div class="info-row-display">
+                            <span class="info-label">비밀번호</span>
+                            <span class="info-value">********</span>
+                            <button class="btn-inline-edit" onclick="openDynamicModal('password')">수정</button>
+                        </div>
                     </div>
+
+                    <!-- 이메일 -->
                     <div class="info-row">
-                        <span class="info-label">가입 일자</span>
-                        <span class="info-value" id="profile-created">로딩 중...</span>
+                        <div class="info-row-display">
+                            <span class="info-label">이메일</span>
+                            <span class="info-value" id="profile-email">로딩 중...</span>
+                            <button class="btn-inline-edit" onclick="openDynamicModal('email')">수정</button>
+                        </div>
+                    </div>
+
+                    <!-- 가입 일자 -->
+                    <div class="info-row">
+                        <div class="info-row-display">
+                            <span class="info-label">가입 일자</span>
+                            <span class="info-value" id="profile-created">로딩 중...</span>
+                            <button class="btn-inline-edit invisible" disabled>수정</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="action-buttons">
-                    <a href="edit_profile.html" class="btn-edit">내 정보 수정하기</a>
-                    <button class="btn-delete" id="btn-delete-account">회원 탈퇴</button>
+                    <button class="btn-delete" id="btn-delete-account" style="width: 100%;">회원 탈퇴</button>
                 </div>
             </main>
         </div>
     </div>
 
+    <!-- 범용 동적 모달: 각 버튼 클릭 시 내용이 바뀜 -->
+    <div id="dynamic-modal-overlay" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">수정하기</h2>
+                <button class="btn-close-modal" onclick="closeDynamicModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert-box hidden" id="modal-alert-box"></div>
+                
+                <!-- 동적으로 바뀔 Input 그룹 컨테이너 -->
+                <div id="modal-input-container">
+                    <!-- JS에서 주입됨 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-modal-cancel" onclick="closeDynamicModal()">취소</button>
+                <button type="button" class="btn-modal-save" onclick="saveDynamicModal()">변경</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 기능 스크립트 연결 -->
-    <script src="js/mypage.js?v=1"></script>
+    <script src="js/mypage.js?v=4"></script>
 </body>
 </html>

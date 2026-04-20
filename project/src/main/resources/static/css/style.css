@@ -454,3 +454,184 @@ body {
     position: relative;
     overflow: hidden;
 }
+
+/* ==========================================================================
+   인라인 수정 레이아웃 (마이페이지)
+   ========================================================================== */
+.info-row {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-row-display, .info-row-edit {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 1.5rem; /* 항목 간 간격 추가 */
+}
+
+.info-row-display.hidden, .info-row-edit.hidden {
+    display: none;
+}
+
+.info-label {
+    color: var(--text-muted);
+    font-weight: 500;
+    width: 150px;
+    flex-shrink: 0;
+}
+
+.info-value {
+    color: var(--text-main);
+    font-weight: 600;
+    /* 텍스트가 너무 길면 잘리도록 처리 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn-inline-edit {
+    margin-left: auto; /* 버튼을 오른쪽 끝단으로 강제 밀어내기 */
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-muted);
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.btn-inline-edit:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+}
+
+.btn-inline-edit.invisible {
+    visibility: hidden;
+}
+
+/* ==========================================================================
+   모달 (Modal / Popup) 레이아웃 부분 수정용
+   ========================================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    width: 100%;
+    max-width: 440px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: scale(1);
+    transition: transform 0.2s;
+}
+
+.modal-overlay.hidden .modal-content {
+    transform: scale(0.95);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modal-header h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.btn-close-modal {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.btn-close-modal:hover { color: var(--error-color); }
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-input {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-main);
+    padding: 0.8rem 1rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+    margin-bottom: 1rem;
+}
+
+.modal-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.modal-footer {
+    display: flex;
+    background-color: rgba(0,0,0,0.2);
+}
+
+.modal-footer button {
+    flex: 1;
+    padding: 1.2rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.btn-modal-cancel {
+    background: transparent;
+    color: var(--text-muted);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+.btn-modal-cancel:hover { background-color: rgba(255,255,255,0.05); color: var(--text-main); }
+
+.btn-modal-save {
+    background-color: transparent;
+    color: var(--accent-color);
+}
+.btn-modal-save:hover { background-color: rgba(79, 70, 229, 0.1); }
