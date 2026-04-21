@@ -39,19 +39,41 @@
             <!-- 메인 트레이딩 레이아웃 (3단 분할 대비) -->
             <div class="trading-layout">
                 
-                <!-- 좌측 코인 목록 패널 (2단계) -->
+                <!-- 좌측 코인 목록 패널 (업비트 탭분리형) -->
                 <aside class="coin-list-panel">
-                    <div class="panel-header">
-                        <h2>원화(KRW) 마켓</h2>
+                    <!-- 마켓 탭 (원화 / 관심) -->
+                    <div class="coin-market-tabs" id="market-tabs">
+                        <div class="market-tab active" data-target="krw-market-list">원화</div>
+                        <div class="market-tab" data-target="fav-market-list">관심</div>
                     </div>
-                    <!-- 신규: 코인 검색 영역 -->
+
+                    <!-- 공통 코인 검색 영역 -->
                     <div class="search-box">
-                        <input type="text" id="coin-search-input" class="search-input" placeholder="코인명 또는 심볼 검색" autocomplete="off">
+                        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="coin-search-input" class="search-input" placeholder="코인명/심볼 검색" autocomplete="off">
                     </div>
-                    <!-- coinList.js가 이곳에 코인 항목들을 렌더링함 -->
-                    <div class="coin-list-container" id="coin-list-container">
-                        <div style="text-align:center; padding:2rem; color:var(--text-muted);">
-                            로딩 중...
+                    
+                    <!-- 코인 리스트 분류 헤더 -->
+                    <div class="list-header-row">
+                        <div class="col-name">코인명</div>
+                        <div class="col-price">현재가</div>
+                        <div class="col-change">등락률</div>
+                    </div>
+
+                    <!-- 원화 마켓 리스트 컨테이너 -->
+                    <div class="coin-list-container active" id="krw-market-list">
+                        <!-- coinList.js가 이곳을 채웁니다 -->
+                        <div style="text-align:center; padding:2rem; color:var(--text-muted); font-size: 0.9rem;">
+                            실시간 데이터를 불러오는 중...
+                        </div>
+                    </div>
+
+                    <!-- 관심 코인 리스트 컨테이너 -->
+                    <div class="coin-list-container" id="fav-market-list" style="display: none;">
+                        <!-- 비어있을 때 안내 문구 -->
+                        <div style="text-align:center; padding:4rem 0; color:var(--text-muted); font-size: 0.9rem; line-height: 1.5;">
+                            등록된 관심 코인이 없습니다.<br>
+                            <span style="font-size:0.8rem; opacity:0.7;">원화 마켓에서 별(☆)을 눌러 등록해보세요.</span>
                         </div>
                     </div>
                 </aside>

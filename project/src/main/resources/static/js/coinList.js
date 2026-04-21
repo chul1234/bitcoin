@@ -2,9 +2,32 @@
 // 좌측 패널: 가상자산(코인) 전체 목록 로딩 및 실시간 시세 업데이트 로직
 // ============================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const listContainer = document.getElementById('coin-list-container');
+    // 1. 컨테이너 및 탭 UI 요소
+    const listContainer = document.getElementById('krw-market-list');
+    const favContainer = document.getElementById('fav-market-list');
+    const marketTabs = document.querySelectorAll('#market-tabs .market-tab');
+    
     let coinMarkets = [];
     let listUpdateInterval = null;
+
+    // 탭 전환 로직
+    if (marketTabs.length > 0) {
+        marketTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                marketTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const target = tab.getAttribute('data-target');
+                if (target === 'krw-market-list') {
+                    listContainer.style.display = 'block';
+                    favContainer.style.display = 'none';
+                } else {
+                    listContainer.style.display = 'none';
+                    favContainer.style.display = 'block';
+                }
+            });
+        });
+    }
 
     initCoinList();
 
@@ -70,7 +93,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             el.innerHTML = `
                 <div class="coin-item-left">
-                    <span class="coin-item-name">${coin.korean_name}</span>
+                    <div style="display:flex; align-items:center;">
+                        <span class="coin-item-name">${coin.korean_name}</span>
+                        <span class="btn-favorite" data-market="${coin.market}" style="margin-left: 0.3rem; margin-bottom: 0.1rem; cursor: pointer; color: rgba(255, 255, 255, 0.2); font-size:1rem; transition:color 0.2s;">☆</span>
+                    </div>
                     <span class="coin-item-symbol">${coin.market.replace('KRW-', '')}</span>
                 </div>
                 <div class="coin-item-right">
@@ -79,13 +105,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
 
-            // 클릭 이벤트: 차트 변경 로직 호출 (window.changeMarket은 chart.js에서 전역으로 노출해야 함)
-            el.addEventListener('click', () => {
+            // 종목 전체 클릭 이벤트: 차트 변경
+            el.addEventListener('click', (e) => {
+                // 즐겨찾기 별표 클릭인 경우, 차트 전이는 무시합니다. (예정된 DB 연동 동작)
+                if(e.target.classList.contains('btn-favorite')) {
+                    // 추후 DB가 연동되면 이곳에서 찜하기 토글 로직 동작 (UI만 시뮬레이션)
+                    const isFav = e.target.innerText === '★';
+                    e.target.innerText = isFav ? '☆' : '★';
+                    e.target.style.color = isFav ? 'var(--text-muted)' : '#FBBF24'; // 노란색으로 강조
+                    return; // 별 클릭 시에는 차트 변동 없음
+                }
+
                 // UI 활성화 상태 변경
                 document.querySelectorAll('.coin-item').forEach(item => item.classList.remove('active'));
                 el.classList.add('active');
                 
-                // chart.js에 정의된 전역 함수 호출
+                // chart.js에 정의된 차트 시장변경 훅 호출
                 if (window.changeMarket) {
                     window.changeMarket(coin.market, coin.korean_name);
                 }
