@@ -76,13 +76,154 @@
                     <div id="orderbook-placeholder" style="display:none;"></div>
                 </main>
                 
-                <!-- 우측 매수/매도 시스템 패널은 현재 보이지 않게 처리 (추후 구현) -->
+                <!-- 우측 매수/매도 시스템 패널 -->
+                <aside class="order-panel">
+                    <div class="panel-header">
+                        <h2>주문 (Order)</h2>
+                    </div>
+                    
+                    <div class="order-type-tabs" id="order-tabs">
+                        <div class="order-tab active" data-target="buy-panel">매수</div>
+                        <div class="order-tab" data-target="sell-panel">매도</div>
+                        <div class="order-tab" data-target="history-panel">거래내역</div>
+                    </div>
+
+                    <!-- 매수(Buy) 패널 -->
+                    <div id="buy-panel" class="order-form-container active" style="display: block;">
+                        <div class="order-form">
+                            <div class="form-row">
+                                <span>주문구분</span>
+                                <div style="display:flex; gap:0.5rem; flex-wrap: wrap;">
+                                    <label style="display:flex; align-items:center; gap:0.25rem; font-weight:600; color:var(--text-main); cursor:pointer; font-size:0.85rem;">
+                                        <input type="radio" name="buyOrderType" value="limit" checked> 지정가
+                                    </label>
+                                    <label style="display:flex; align-items:center; gap:0.25rem; font-weight:600; color:var(--text-main); cursor:pointer; font-size:0.85rem;">
+                                        <input type="radio" name="buyOrderType" value="market"> 시장가
+                                    </label>
+                                    <label style="display:flex; align-items:center; gap:0.25rem; font-weight:600; color:var(--text-main); cursor:pointer; font-size:0.85rem;">
+                                        <input type="radio" name="buyOrderType" value="stop_limit"> 예약-지정가
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-row" style="margin-top: 0.5rem;">
+                                <span>주문가능</span>
+                                <span style="color:var(--text-main); font-weight:700;">0 <span style="font-size:0.8rem; color:var(--text-muted);">KRW</span></span>
+                            </div>
+
+                            <!-- 감시가 (예약-지정가일 때만 노출) -->
+                            <div class="order-input-group trigger-price-row" style="display: none; border-color: rgba(239, 68, 68, 0.4);">
+                                <input type="number" placeholder="감시가 (발동 가격)" class="trigger-input">
+                                <span class="unit">KRW</span>
+                            </div>
+
+                            <div class="order-input-group">
+                                <input type="number" placeholder="0 (주문 가격)" class="price-input">
+                                <span class="unit">KRW</span>
+                            </div>
+
+                            <div class="order-input-group">
+                                <input type="number" placeholder="0 (주문 수량)" class="amount-input">
+                                <span class="unit">BTC</span>
+                            </div>
+
+                            <div class="order-percentages">
+                                <button class="btn-percent">10%</button>
+                                <button class="btn-percent">25%</button>
+                                <button class="btn-percent">50%</button>
+                                <button class="btn-percent">100%</button>
+                            </div>
+
+                            <div class="form-row" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                                <span>주문총액</span>
+                                <span style="font-size: 1.2rem; font-weight: 700; color:var(--text-main);">0 <span style="font-size:0.8rem; color:var(--text-muted);">KRW</span></span>
+                            </div>
+
+                            <div class="trade-btn-group">
+                                <button class="btn-buy" style="width:100%;">매수 (Buy)</button>
+                            </div>
+                            <!-- 최소 주문 금액 및 수수료 안내 -->
+                            <div style="margin-top: 0.5rem; text-align: center; color: rgba(255, 255, 255, 0.4); font-size: 0.75rem; line-height: 1.4;">
+                                최소주문금액: 5,000 KRW<br>수수료: 0.05%
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 매도(Sell) 패널 -->
+                    <div id="sell-panel" class="order-form-container" style="display: none;">
+                        <div class="order-form">
+                            <div class="form-row">
+                                <span>주문구분</span>
+                                <div style="display:flex; gap:0.5rem; flex-wrap: wrap;">
+                                    <label style="display:flex; align-items:center; gap:0.25rem; font-weight:600; color:var(--text-main); cursor:pointer; font-size:0.85rem;">
+                                        <input type="radio" name="sellOrderType" value="limit" checked> 지정가
+                                    </label>
+                                    <label style="display:flex; align-items:center; gap:0.25rem; font-weight:600; color:var(--text-main); cursor:pointer; font-size:0.85rem;">
+                                        <input type="radio" name="sellOrderType" value="market"> 시장가
+                                    </label>
+                                    <label style="display:flex; align-items:center; gap:0.25rem; font-weight:600; color:var(--text-main); cursor:pointer; font-size:0.85rem;">
+                                        <input type="radio" name="sellOrderType" value="stop_limit"> 예약-지정가
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-row" style="margin-top: 0.5rem;">
+                                <span>매도가능</span>
+                                <span style="color:var(--text-main); font-weight:700;">0 <span style="font-size:0.8rem; color:var(--text-muted);">BTC</span></span>
+                            </div>
+
+                            <!-- 감시가 (예약-지정가일 때만 노출) -->
+                            <div class="order-input-group trigger-price-row" style="display: none; border-color: rgba(59, 130, 246, 0.4);">
+                                <input type="number" placeholder="감시가 (발동 가격)" class="trigger-input">
+                                <span class="unit">KRW</span>
+                            </div>
+
+                            <div class="order-input-group">
+                                <input type="number" placeholder="0 (주문 가격)" class="price-input">
+                                <span class="unit">KRW</span>
+                            </div>
+
+                            <div class="order-input-group">
+                                <input type="number" placeholder="0 (주문 수량)" class="amount-input">
+                                <span class="unit">BTC</span>
+                            </div>
+
+                            <div class="order-percentages">
+                                <button class="btn-percent">10%</button>
+                                <button class="btn-percent">25%</button>
+                                <button class="btn-percent">50%</button>
+                                <button class="btn-percent">100%</button>
+                            </div>
+
+                            <div class="form-row" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                                <span>주문총액</span>
+                                <span style="font-size: 1.2rem; font-weight: 700; color:var(--text-main);">0 <span style="font-size:0.8rem; color:var(--text-muted);">KRW</span></span>
+                            </div>
+
+                            <div class="trade-btn-group">
+                                <button class="btn-sell" style="width:100%;">매도 (Sell)</button>
+                            </div>
+                            <!-- 최소 주문 금액 및 수수료 안내 -->
+                            <div style="margin-top: 0.5rem; text-align: center; color: rgba(255, 255, 255, 0.4); font-size: 0.75rem; line-height: 1.4;">
+                                최소주문금액: 5,000 KRW<br>수수료: 0.05%
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 거래내역(History) 패널 -->
+                    <div id="history-panel" class="order-form-container" style="display: none;">
+                        <div class="order-form" style="text-align: center; color: var(--text-muted); padding-top: 3rem;">
+                            아직 거래 내역이 없습니다.
+                        </div>
+                    </div>
+                </aside>
             </div>
         </div>
     </div>
 
-    <!-- 차트 및 리스트 스크립트 (캐시 무효화 포함) -->
+    <!-- 차트, 코인리스트, 주문 컨트롤 로직 연결 -->
     <script src="js/chart.js?v=4"></script>
     <script src="js/coinList.js?v=1"></script>
+    <script src="js/order.js?v=1"></script>
 </body>
 </html>

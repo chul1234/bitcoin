@@ -211,8 +211,8 @@ body {
     width: 100%;
     height: 100vh;
     display: grid;
-    /* 1단계(차트), 2단계: 네비(80px) | 코인목록(320px) | 메인 | 우측(예정) */
-    grid-template-columns: 80px 320px 1fr; 
+    /* 네비(80px) | 코인목록(320px) | 메인차트(1fr) | 주문창(340px) */
+    grid-template-columns: 80px 320px 1fr 340px; 
     overflow: hidden;
 }
 
@@ -635,3 +635,139 @@ body {
     color: var(--accent-color);
 }
 .btn-modal-save:hover { background-color: rgba(79, 70, 229, 0.1); }
+
+/* ==========================================================================
+   3단계: 우측 주문 패널 (Order Panel)
+   ========================================================================== */
+.order-panel {
+    background-color: #111827;
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.order-type-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.order-tab {
+    flex: 1;
+    padding: 1rem 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.order-tab.active {
+    color: var(--text-main);
+    border-bottom-color: var(--accent-color);
+}
+
+.order-form {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.order-input-group {
+    display: flex;
+    align-items: center;
+    background-color: #0F172A;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0 1rem;
+    height: 48px;
+}
+
+.order-input-group input {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-weight: 600;
+    font-size: 1rem;
+    width: 100%;
+    text-align: right;
+    outline: none;
+}
+
+.order-input-group span.unit {
+    color: var(--text-muted);
+    margin-left: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.order-percentages {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-percent {
+    flex: 1;
+    background-color: #0F172A;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    padding: 0.5rem 0;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-percent:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+}
+
+.trade-btn-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn-buy {
+    flex: 1;
+    background-color: #EF4444; /* 매수는 보통 빨간색 (한국 기준) */
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 1.25rem 0;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-buy:hover { background-color: #DC2626; }
+
+.btn-sell {
+    flex: 1;
+    background-color: #3B82F6; /* 매도는 보통 파란색 (한국 기준) */
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 1.25rem 0;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-sell:hover { background-color: #2563EB; }

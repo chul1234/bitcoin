@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 showError(signupAlertBox, data.message || '회원가입에 실패했습니다.');
             }
-        } catch (error) {
+        } catch (error) { 
             showError(signupAlertBox, '서버와의 통신에 실패했습니다.');
         } finally {
             signupBtn.disabled = false;
