@@ -443,8 +443,8 @@ body {
     font-weight: 600;
 }
 
-.price-change.positive { color: #10B981; }
-.price-change.negative { color: #EF4444; }
+.price-change.positive { color: #EF4444; } /* 상승: 빨강 */
+.price-change.negative { color: #3B82F6; } /* 하락: 파랑 */
 
 .chart-wrapper {
     flex: 1;
