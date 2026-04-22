@@ -35,64 +35,160 @@
             </aside>
 
             <!-- 마이페이지 콘텐츠 영역 -->
-            <main class="profile-container">
-                <header class="profile-header">
-                    <h1>마이페이지</h1>
-                    <p>내 계정 정보 조회 및 개인정보 수정 관리</p>
+            <main class="profile-container" style="max-width: 1200px; margin: 0 auto; padding: 2.5rem; width: 100%;">
+                <header class="profile-header" style="margin-bottom: 2.5rem;">
+                    <h1 style="font-size: 1.8rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem;">마이페이지</h1>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">내 계정 정보 조회 및 보안·자산 설정</p>
                 </header>
 
                 <div class="alert-box hidden" id="mypage-alert-box"></div>
 
-                <div class="alert-box hidden" id="mypage-alert-box"></div>
-                <div class="info-card">
-                    <!-- 이름 -->
-                    <div class="info-row">
-                        <div class="info-row-display">
-                            <span class="info-label">이름</span>
-                            <span class="info-value" id="profile-name">로딩 중...</span>
-                            <button class="btn-inline-edit invisible" disabled>수정</button>
+                <!-- 2단 그리드 레이아웃 -->
+                <div class="mypage-grid" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; align-items: start;">
+                    
+                    <!-- 왼쪽 열: 기본 계정 정보 -->
+                    <div class="mypage-left-col" style="display: flex; flex-direction: column; gap: 2rem;">
+                        <div class="info-card" style="box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                            <h3 style="margin-bottom: 1.5rem; color: var(--text-main); font-size: 1.15rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem; display:flex; align-items:center; gap:0.5rem;">
+                                <span>👤</span> 기본 정보
+                            </h3>
+                            <!-- 이름 -->
+                            <div class="info-row">
+                                <div class="info-row-display">
+                                    <span class="info-label">이름</span>
+                                    <span class="info-value" id="profile-name">로딩 중...</span>
+                                    <button class="btn-inline-edit invisible" disabled>수정</button>
+                                </div>
+                            </div>
+                            <!-- 아이디 -->
+                            <div class="info-row">
+                                <div class="info-row-display">
+                                    <span class="info-label">아이디</span>
+                                    <span class="info-value" id="profile-userid">로딩 중...</span>
+                                    <button class="btn-inline-edit" onclick="openDynamicModal('userid')">수정</button>
+                                </div>
+                            </div>
+                            <!-- 비밀번호 -->
+                            <div class="info-row">
+                                <div class="info-row-display">
+                                    <span class="info-label">비밀번호</span>
+                                    <span class="info-value">********</span>
+                                    <button class="btn-inline-edit" onclick="openDynamicModal('password')">수정</button>
+                                </div>
+                            </div>
+                            <!-- 이메일 -->
+                            <div class="info-row">
+                                <div class="info-row-display">
+                                    <span class="info-label">이메일</span>
+                                    <span class="info-value" id="profile-email">로딩 중...</span>
+                                    <button class="btn-inline-edit" onclick="openDynamicModal('email')">수정</button>
+                                </div>
+                            </div>
+                            <!-- 가입 일자 -->
+                            <div class="info-row" style="border-bottom: none;">
+                                <div class="info-row-display">
+                                    <span class="info-label">가입 일자</span>
+                                    <span class="info-value" id="profile-created">로딩 중...</span>
+                                    <button class="btn-inline-edit invisible" disabled>수정</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 위험 구역 (회원 탈퇴) -->
+                        <div class="danger-zone" style="background: rgba(239, 68, 68, 0.03); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 12px; padding: 1.5rem; transition: all 0.2s ease;">
+                            <h3 style="color: #EF4444; margin-bottom: 0.5rem; font-size: 1.05rem; display:flex; align-items:center; gap:0.5rem;">
+                                <span>⚠️</span> 위험 구역
+                            </h3>
+                            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.2rem; line-height: 1.4;">계정을 삭제하면 모든 투자 내역, API 연동 정보, 개인정보가 영구적으로 삭제되며 복구할 수 없습니다.</p>
+                            <button class="btn-delete" id="btn-delete-account" style="width: 100%; background: transparent; color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.4); padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseout="this.style.background='transparent'">회원 탈퇴 진행</button>
                         </div>
                     </div>
 
-                    <!-- 아이디 -->
-                    <div class="info-row">
-                        <div class="info-row-display">
-                            <span class="info-label">아이디</span>
-                            <span class="info-value" id="profile-userid">로딩 중...</span>
-                            <button class="btn-inline-edit" onclick="openDynamicModal('userid')">수정</button>
+                    <!-- 오른쪽 열: 자산, API, 보안 정보 -->
+                    <div class="mypage-right-col" style="display: flex; flex-direction: column; gap: 2rem;">
+                        
+                        <!-- 1. 총 자산 요약 (모의 데이터) -->
+                        <div class="info-card" style="background: linear-gradient(135deg, rgba(38, 166, 154, 0.1) 0%, rgba(30, 41, 59, 0.6) 100%); border: 1px solid rgba(38, 166, 154, 0.2); position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                            <!-- 백그라운드 장식 -->
+                            <div style="position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: radial-gradient(circle, rgba(38,166,154,0.15) 0%, transparent 70%); border-radius: 50%;"></div>
+                            
+                            <h3 style="margin-bottom: 1rem; color: var(--text-main); font-size: 1.05rem; display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1;">
+                                <span style="display:flex; align-items:center; gap:0.5rem;"><span>💰</span> 총 보유 자산 요약</span>
+                                <span style="font-size: 0.75rem; background: rgba(38,166,154,0.15); color: #26a69a; padding: 0.2rem 0.6rem; border-radius: 12px; border: 1px solid rgba(38,166,154,0.3);">Real-time</span>
+                            </h3>
+                            <div style="font-size: 2.2rem; font-weight: 800; color: #fff; margin-bottom: 0.8rem; letter-spacing: -0.5px; position: relative; z-index: 1;">
+                                0 <span style="font-size: 1.1rem; color: rgba(255,255,255,0.5); font-weight: 500;">KRW</span>
+                            </div>
+                            <div style="display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted); position: relative; z-index: 1;">
+                                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #26a69a; box-shadow: 0 0 5px #26a69a;"></span>
+                                    <span>투자 가능 잔액: <strong style="color:var(--text-main);">0</strong></span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #EF4444; box-shadow: 0 0 5px #EF4444;"></span>
+                                    <span>묶인 자산: <strong style="color:var(--text-main);">0</strong></span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- 비밀번호 -->
-                    <div class="info-row">
-                        <div class="info-row-display">
-                            <span class="info-label">비밀번호</span>
-                            <span class="info-value">********</span>
-                            <button class="btn-inline-edit" onclick="openDynamicModal('password')">수정</button>
+                        <!-- 2. 거래소 API 관리 -->
+                        <div class="info-card" style="box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                            <h3 style="margin-bottom: 1.2rem; color: var(--text-main); font-size: 1.15rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem; display:flex; align-items:center; gap:0.5rem;">
+                                <span>🔗</span> 거래소 API 연동
+                            </h3>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                                <!-- Upbit API -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+                                    <div style="display: flex; align-items: center; gap: 0.8rem;">
+                                        <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #0036A4 0%, #00267A 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(0,54,164,0.3);">UP</div>
+                                        <div>
+                                            <div style="color: var(--text-main); font-weight: 600; font-size: 0.95rem;">업비트 (Upbit)</div>
+                                            <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.1rem;">상태: <span style="color: #F59E0B;">미연동</span></div>
+                                        </div>
+                                    </div>
+                                    <button class="btn-inline-edit" style="width: auto; padding: 0.4rem 1.2rem; background: rgba(38,166,154,0.1); color: #26a69a; border: 1px solid rgba(38,166,154,0.3); border-radius: 6px;">키 등록</button>
+                                </div>
+                                
+                                <!-- Binance API -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+                                    <div style="display: flex; align-items: center; gap: 0.8rem;">
+                                        <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #FCD535 0%, #EAB308 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #1e2329; font-weight: 800; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(252,213,53,0.2);">BN</div>
+                                        <div>
+                                            <div style="color: var(--text-main); font-weight: 600; font-size: 0.95rem;">바이낸스 (Binance)</div>
+                                            <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.1rem;">상태: <span style="color: var(--text-muted);">지원 예정</span></div>
+                                        </div>
+                                    </div>
+                                    <button class="btn-inline-edit invisible" style="width: auto; padding: 0.4rem 1.2rem; border-radius: 6px;" disabled>준비중</button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- 이메일 -->
-                    <div class="info-row">
-                        <div class="info-row-display">
-                            <span class="info-label">이메일</span>
-                            <span class="info-value" id="profile-email">로딩 중...</span>
-                            <button class="btn-inline-edit" onclick="openDynamicModal('email')">수정</button>
+                        <!-- 3. 계정 보안 내역 -->
+                        <div class="info-card" style="box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                            <h3 style="margin-bottom: 1.2rem; color: var(--text-main); font-size: 1.15rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem; display:flex; align-items:center; gap:0.5rem;">
+                                <span>🛡️</span> 보안 및 접속 내역
+                            </h3>
+                            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; padding: 0.3rem 0;">
+                                    <span style="color: var(--text-muted); display:flex; align-items:center; gap:0.4rem;"><span>📍</span> 최근 로그인</span>
+                                    <span style="color: var(--text-main); font-family: monospace;">오늘 13:25 <span style="color:var(--text-muted); font-size:0.8rem;">(192.168.0.1)</span></span>
+                                </div>
+                                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; padding: 0.3rem 0;">
+                                    <span style="color: var(--text-muted); display:flex; align-items:center; gap:0.4rem;"><span>🔐</span> 2단계 인증 (OTP)</span>
+                                    <span style="color: #EF4444; font-weight: 500; display:flex; align-items:center; gap:0.5rem;">
+                                        비활성화 
+                                        <button class="btn-inline-edit" style="padding: 0.2rem 0.6rem; border-radius: 4px;">설정</button>
+                                    </span>
+                                </div>
+                                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; padding: 0.3rem 0;">
+                                    <span style="color: var(--text-muted); display:flex; align-items:center; gap:0.4rem;"><span>🔔</span> 접속 알림 이메일</span>
+                                    <span style="color: #10B981; font-weight: 500;">활성화 됨</span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- 가입 일자 -->
-                    <div class="info-row">
-                        <div class="info-row-display">
-                            <span class="info-label">가입 일자</span>
-                            <span class="info-value" id="profile-created">로딩 중...</span>
-                            <button class="btn-inline-edit invisible" disabled>수정</button>
-                        </div>
                     </div>
-                </div>
-
-                <div class="action-buttons">
-                    <button class="btn-delete" id="btn-delete-account" style="width: 100%;">회원 탈퇴</button>
                 </div>
             </main>
         </div>
