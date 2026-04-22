@@ -51,32 +51,108 @@
                     </div>
                 </header>
 
-                <div>
-                    <!-- 자산 요약 대시보드 -->
-                    <div class="portfolio-dashboard" style="max-width: 800px;">
-                        <!-- 보유 자산 (남은 돈) -->
-                        <div class="asset-card">
-                            <span class="asset-label">보유 자산 (현금)</span>
-                            <div class="asset-value">0 <span>KRW</span></div>
+                <div style="display: flex; flex-direction: column; gap: 2rem;">
+                    <!-- 1. 자산 요약 대시보드 (4카드 확장) -->
+                    <div class="portfolio-dashboard" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; max-width: none;">
+                        
+                        <div class="asset-card" style="background: linear-gradient(135deg, rgba(38,166,154,0.1), rgba(30,41,59,0.4)); border: 1px solid rgba(38,166,154,0.2); position: relative; overflow: hidden;">
+                            <div style="position: absolute; right: -15px; top: -15px; width: 80px; height: 80px; background: radial-gradient(circle, rgba(38,166,154,0.15) 0%, transparent 70%); border-radius: 50%;"></div>
+                            <span class="asset-label" style="color:var(--text-main); font-size:1rem;">총 보유 자산</span>
+                            <div class="asset-value" style="font-size: 1.9rem; font-weight: 800; margin-top:0.5rem;">14,520,000 <span style="font-size:1rem;color:var(--text-muted); font-weight:500;">KRW</span></div>
                         </div>
-
-                        <!-- 총 보유 자산 (현금 + 코인 가치) -->
-                        <div class="asset-card">
-                            <span class="asset-label">총 보유 자산</span>
-                            <div class="asset-value">0 <span>KRW</span></div>
+                        
+                        <div class="asset-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                            <span class="asset-label">보유 현금</span>
+                            <div class="asset-value" style="font-size: 1.6rem; margin-top:0.5rem;">2,520,000 <span style="font-size:0.9rem;color:var(--text-muted);">KRW</span></div>
+                        </div>
+                        
+                        <div class="asset-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                            <span class="asset-label">총 매수 금액</span>
+                            <div class="asset-value" style="font-size: 1.6rem; margin-top:0.5rem;">10,000,000 <span style="font-size:0.9rem;color:var(--text-muted);">KRW</span></div>
+                        </div>
+                        
+                        <div class="asset-card" style="border-right: 4px solid #EF4444; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                            <span class="asset-label">총 평가 손익</span>
+                            <div class="asset-value" style="font-size: 1.6rem; color:#EF4444; font-weight:700; margin-top:0.5rem;">+2,000,000 <span style="font-size:0.95rem;color:#EF4444;">(+20.00%)</span></div>
                         </div>
                     </div>
 
-                    <!-- 포트폴리오 원 그래프 구역 -->
-                    <div class="portfolio-chart-container" style="max-width: 800px;">
-                        <div class="chart-header">
-                            <h3>보유자산 포트폴리오 비중</h3>
-                        </div>
+                    <!-- 2. 포트폴리오 차트 & 보유 코인 목록 (2단 그리드) -->
+                    <div style="display: grid; grid-template-columns: minmax(350px, 1fr) minmax(600px, 2fr); gap: 2rem; align-items: start;">
                         
-                        <div class="chart-wrapper">
-                            <!-- 나중에 기능을 연결할 때 그릴 캔버스 세팅 -->
-                            <canvas id="portfolioChart"></canvas>
+                        <!-- 좌측: 도넛 차트 -->
+                        <div class="portfolio-chart-container" style="margin:0; height: 100%; max-width: none; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+                            <div class="chart-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1.2rem; margin-bottom: 1.5rem;">
+                                <h3 style="font-size:1.15rem; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;"><span>📊</span> 자산 비중</h3>
+                            </div>
+                            <div class="chart-wrapper" style="height: 320px;">
+                                <canvas id="portfolioChart"></canvas>
+                            </div>
                         </div>
+
+                        <!-- 우측: 보유 코인 리스트 테이블 -->
+                        <div class="holdings-container" style="background: var(--bg-panel); border-radius: 16px; border: 1px solid var(--border-color); padding: 1.8rem; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+                            <div class="chart-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1.2rem; margin-bottom: 1rem; display:flex; justify-content:space-between; align-items:center;">
+                                <h3 style="font-size:1.15rem; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;"><span>💼</span> 보유 코인 목록</h3>
+                                <button style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); padding:0.5rem 1rem; border-radius:8px; font-size:0.85rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">내역 다운로드</button>
+                            </div>
+                            
+                            <div style="overflow-x: auto;">
+                                <table style="width: 100%; border-collapse: collapse; text-align: right; font-size: 0.95rem;">
+                                    <thead>
+                                        <tr style="color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.85rem;">
+                                            <th style="padding: 1rem 0.5rem; text-align: left; font-weight:500;">보유자산</th>
+                                            <th style="padding: 1rem 0.5rem; font-weight:500;">보유수량</th>
+                                            <th style="padding: 1rem 0.5rem; font-weight:500;">매수평균가</th>
+                                            <th style="padding: 1rem 0.5rem; font-weight:500;">평가금액</th>
+                                            <th style="padding: 1rem 0.5rem; font-weight:500;">평가손익</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                                            <td style="padding: 1.2rem 0.5rem; text-align: left; display:flex; align-items:center; gap:0.8rem;">
+                                                <div style="width: 32px; height: 32px; background: #F59E0B; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; color: #fff;">B</div>
+                                                <div>
+                                                    <div style="font-weight:700; color:var(--text-main);">비트코인</div>
+                                                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.2rem;">BTC/KRW</div>
+                                                </div>
+                                            </td>
+                                            <td style="padding: 1.2rem 0.5rem; color:var(--text-main); font-weight:500;">0.05000000</td>
+                                            <td style="padding: 1.2rem 0.5rem; color:var(--text-muted);">100,000,000</td>
+                                            <td style="padding: 1.2rem 0.5rem; color:var(--text-main); font-weight:600;">5,700,000</td>
+                                            <td style="padding: 1.2rem 0.5rem; color:#EF4444; font-weight:700;">+700,000<br><span style="font-size:0.8rem; opacity:0.9;">+14.00%</span></td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                                            <td style="padding: 1.2rem 0.5rem; text-align: left; display:flex; align-items:center; gap:0.8rem;">
+                                                <div style="width: 32px; height: 32px; background: #6366F1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; color: #fff;">E</div>
+                                                <div>
+                                                    <div style="font-weight:700; color:var(--text-main);">이더리움</div>
+                                                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.2rem;">ETH/KRW</div>
+                                                </div>
+                                            </td>
+                                            <td style="padding: 1.2rem 0.5rem; color:var(--text-main); font-weight:500;">1.25000000</td>
+                                            <td style="padding: 1.2rem 0.5rem; color:var(--text-muted);">4,000,000</td>
+                                            <td style="padding: 1.2rem 0.5rem; color:var(--text-main); font-weight:600;">4,800,000</td>
+                                            <td style="padding: 1.2rem 0.5rem; color:#3B82F6; font-weight:700;">-200,000<br><span style="font-size:0.8rem; opacity:0.9;">-4.00%</span></td>
+                                        </tr>
+                                        <tr style="transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                                            <td style="padding: 1.2rem 0.5rem; text-align: left; display:flex; align-items:center; gap:0.8rem;">
+                                                <div style="width: 32px; height: 32px; background: #10B981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; color: #fff;">X</div>
+                                                <div>
+                                                    <div style="font-weight:700; color:var(--text-main);">리플</div>
+                                                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.2rem;">XRP/KRW</div>
+                                                </div>
+                                            </td>
+                                            <td style="padding: 1.2rem 0.5rem; color:var(--text-main); font-weight:500;">2,000.0000</td>
+                                            <td style="padding: 1.2rem 0.5rem; color:var(--text-muted);">750</td>
+                                            <td style="padding: 1.2rem 0.5rem; color:var(--text-main); font-weight:600;">1,500,000</td>
+                                            <td style="padding: 1.2rem 0.5rem; color:var(--text-muted); font-weight:700;">0<br><span style="font-size:0.8rem;">0.00%</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </main>
