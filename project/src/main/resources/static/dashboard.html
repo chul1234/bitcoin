@@ -102,19 +102,19 @@
                     <div class="chart-toolbar-container" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding: 0.5rem 1.5rem; background-color: rgba(255,255,255,0.02);">
                         
                         <!-- 1. 기본 차트 툴바 (텍스트 중심) -->
-                        <div id="toolbar-basic" class="toolbar-left" style="display:flex; gap:1rem; align-items:center; font-size: 0.85rem; color:var(--text-muted);">
+                        <div id="toolbar-basic" class="toolbar-left" style="display:none; gap:1rem; align-items:center; font-size: 0.85rem; color:var(--text-muted);">
                             <span style="cursor:pointer; display:flex; align-items:center; gap:0.25rem;">⛶ <span style="font-size:0.7rem;">확대</span></span>
                             <div style="width:1px; height:12px; background:rgba(255,255,255,0.1);"></div>
                             <div class="time-dropdown">
-                                <span id="basic-time-label" style="cursor:pointer; display:flex; align-items:center; gap:0.25rem; color:var(--accent-color);">1시간 <span style="font-size:0.6rem;">▼</span></span>
+                                <span id="basic-time-label" style="cursor:pointer; display:flex; align-items:center; gap:0.25rem; color:var(--accent-color);">1분 <span style="font-size:0.6rem;">▼</span></span>
                                 <div class="time-dropdown-content">
-                                    <span class="timeframe-btn" data-timeframe="1m">1분</span>
+                                    <span class="timeframe-btn active" data-timeframe="1m" style="color:var(--accent-color);">1분</span>
                                     <span class="timeframe-btn" data-timeframe="3m">3분</span>
                                     <span class="timeframe-btn" data-timeframe="5m">5분</span>
                                     <span class="timeframe-btn" data-timeframe="10m">10분</span>
                                     <span class="timeframe-btn" data-timeframe="15m">15분</span>
                                     <span class="timeframe-btn" data-timeframe="30m">30분</span>
-                                    <span class="timeframe-btn active" data-timeframe="60m" style="color:var(--accent-color);">1시간</span>
+                                    <span class="timeframe-btn" data-timeframe="60m">1시간</span>
                                     <span class="timeframe-btn" data-timeframe="240m">4시간</span>
                                     <span class="timeframe-btn" data-timeframe="1d">일</span>
                                     <span class="timeframe-btn" data-timeframe="1w">주</span>
@@ -128,15 +128,15 @@
                         </div>
 
                         <!-- 2. 트레이딩 뷰 툴바 (아이콘 중심, 숨김 처리) -->
-                        <div id="toolbar-tv" class="toolbar-left" style="display:none; gap:1rem; align-items:center; font-size: 0.85rem; color:var(--text-muted);">
+                        <div id="toolbar-tv" class="toolbar-left" style="display:flex; gap:1rem; align-items:center; font-size: 0.85rem; color:var(--text-muted);">
                             <div id="tv-timeframe-group" style="display:flex; gap:0.5rem; align-items:center;">
-                                <span class="timeframe-btn" data-timeframe="1m" style="cursor:pointer;">1분</span>
+                                <span class="timeframe-btn active" data-timeframe="1m" style="cursor:pointer; color:var(--accent-color); border-bottom:2px solid var(--accent-color); padding-bottom:0.2rem;">1분</span>
                                 <span class="timeframe-btn" data-timeframe="3m" style="cursor:pointer;">3분</span>
                                 <span class="timeframe-btn" data-timeframe="5m" style="cursor:pointer;">5분</span>
                                 <span class="timeframe-btn" data-timeframe="10m" style="cursor:pointer;">10분</span>
                                 <span class="timeframe-btn" data-timeframe="15m" style="cursor:pointer;">15분</span>
                                 <span class="timeframe-btn" data-timeframe="30m" style="cursor:pointer;">30분</span>
-                                <span class="timeframe-btn active" data-timeframe="60m" style="cursor:pointer; color:var(--accent-color); border-bottom:2px solid var(--accent-color); padding-bottom:0.2rem;">1시간</span>
+                                <span class="timeframe-btn" data-timeframe="60m" style="cursor:pointer;">1시간</span>
                                 <span class="timeframe-btn" data-timeframe="240m" style="cursor:pointer;">4시간</span>
                                 <span class="timeframe-btn" data-timeframe="1d" style="cursor:pointer;">일</span>
                                 <span class="timeframe-btn" data-timeframe="1w" style="cursor:pointer;">주</span>
@@ -154,11 +154,11 @@
 
                         <!-- 공통: 우측 모드 전환 라디오 버튼 -->
                         <div class="toolbar-right" style="display:flex; gap:1rem; align-items:center; font-size: 0.85rem;">
-                            <label style="cursor:pointer; display:flex; align-items:center; gap:0.3rem; color:var(--text-main);">
-                                <input type="radio" name="chartMode" value="basic" checked> 기본차트
-                            </label>
                             <label style="cursor:pointer; display:flex; align-items:center; gap:0.3rem; color:var(--text-muted);">
-                                <input type="radio" name="chartMode" value="tradingview"> 트레이딩뷰
+                                <input type="radio" name="chartMode" value="basic"> 기본차트
+                            </label>
+                            <label style="cursor:pointer; display:flex; align-items:center; gap:0.3rem; color:var(--text-main);">
+                                <input type="radio" name="chartMode" value="tradingview" checked> 트레이딩뷰
                             </label>
                         </div>
                     </div>

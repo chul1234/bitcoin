@@ -271,6 +271,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
             });
+
+            // 초기 상태(트레이딩뷰)를 즉시 반영하기 위해 체크된 라디오 버튼의 이벤트 강제 발생
+            const initialCheckedRadio = Array.from(chartModeRadios).find(r => r.checked);
+            if (initialCheckedRadio) {
+                initialCheckedRadio.dispatchEvent(new Event('change'));
+            }
         }
 
         // 기초 캔들 데이터 로딩 후 주기적 시세 업데이트 시작
