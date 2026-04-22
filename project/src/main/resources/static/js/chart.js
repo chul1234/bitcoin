@@ -136,6 +136,43 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // ----------------------------------------------------
+        // 차트 레전드 업데이트 (크로스헤어 호버)
+        // ----------------------------------------------------
+        chart.subscribeCrosshairMove((param) => {
+            const legendO = document.getElementById('leg-o');
+            const legendH = document.getElementById('leg-h');
+            const legendL = document.getElementById('leg-l');
+            const legendC = document.getElementById('leg-c');
+            const legendMa15 = document.getElementById('leg-ma15');
+            const legendMa50 = document.getElementById('leg-ma50');
+            const legendVol = document.getElementById('leg-vol');
+
+            if (param.time) {
+                const data = param.seriesData.get(candlestickSeries);
+                const ma15Data = param.seriesData.get(ma15Series);
+                const ma50Data = param.seriesData.get(ma50Series);
+                const volData = param.seriesData.get(volumeSeries);
+
+                if (data) {
+                    legendO.innerText = data.open.toLocaleString();
+                    legendH.innerText = data.high.toLocaleString();
+                    legendL.innerText = data.low.toLocaleString();
+                    legendC.innerText = data.close.toLocaleString();
+                }
+                if (ma15Data && ma15Data.value) legendMa15.innerText = ma15Data.value.toLocaleString(undefined, {maximumFractionDigits: 0});
+                if (ma50Data && ma50Data.value) legendMa50.innerText = ma50Data.value.toLocaleString(undefined, {maximumFractionDigits: 0});
+                if (volData && volData.value !== undefined) legendVol.innerText = volData.value.toLocaleString(undefined, {maximumFractionDigits: 2});
+            } else if (lastCandle) {
+                // 마우스가 벗어났을 경우, 가장 마지막 캔들 기준으로 데이터 복구
+                legendO.innerText = lastCandle.open.toLocaleString();
+                legendH.innerText = lastCandle.high.toLocaleString();
+                legendL.innerText = lastCandle.low.toLocaleString();
+                legendC.innerText = lastCandle.close.toLocaleString();
+                legendVol.innerText = lastCandle.volume.toLocaleString(undefined, {maximumFractionDigits: 2});
+            }
+        });
+
         // 타임프레임(시간/일/주) 버튼 전환 이벤트 바인딩
         const timeframeBtns = document.querySelectorAll('.timeframe-btn');
         const basicTimeLabel = document.getElementById('basic-time-label');
@@ -144,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', async (e) => {
                 const tf = e.currentTarget.getAttribute('data-timeframe');
                 const tfText = e.currentTarget.innerText;
+                const legendTf = document.getElementById('legend-tf');
                 
                 if(tf === '1s') {
                     alert('업비트 API에서 1초봉은 정식 지원하지 않습니다.');
@@ -168,9 +206,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 e.currentTarget.classList.add('active');
 
-                // 기본 차트의 라벨 텍스트 변경
+                // 기본 차트 및 레전드의 라벨 텍스트 변경
                 if(basicTimeLabel) {
                     basicTimeLabel.innerHTML = `${tfText} <span style="font-size:0.6rem;">▼</span>`;
+                }
+                if(legendTf) {
+                    legendTf.innerText = tfText;
                 }
 
                 // API 엔드포인트 변경
@@ -195,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const chartModeRadios = document.querySelectorAll('input[name="chartMode"]');
         const toolbarBasic = document.getElementById('toolbar-basic');
         const toolbarTv = document.getElementById('toolbar-tv');
+        const legendMa = document.getElementById('legend-ma');
 
         if (chartModeRadios.length > 0) {
             chartModeRadios.forEach(radio => {
@@ -207,6 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // 2. 차트 내부 내용 변경: 트레이딩뷰 모드에서는 이동평균선을 깨끗하게 숨김
                         if (ma15Series) ma15Series.applyOptions({ visible: false });
                         if (ma50Series) ma50Series.applyOptions({ visible: false });
+                        if (legendMa) legendMa.style.display = 'none';
                         
                         // 트레이딩뷰 모드: 캔들을 하단까지 허용하고, 거래량을 캔들 영역 밑바닥에 오버레이
                         chart.priceScale('right').applyOptions({ scaleMargins: { top: 0.1, bottom: 0.05 } });
@@ -220,6 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // 2. 차트 내부 내용 변경: 기본 차트 모드에서는 이동평균선을 다시 노출
                         if (ma15Series) ma15Series.applyOptions({ visible: true });
                         if (ma50Series) ma50Series.applyOptions({ visible: true });
+                        if (legendMa) legendMa.style.display = 'flex';
                         
                         // 기본차트 모드: 캔들이 하단 25%를 절대 침범하지 못하게 막고, 거래량은 하단 20%만 차지하게 하여 완벽히 분리
                         chart.priceScale('right').applyOptions({ scaleMargins: { top: 0.1, bottom: 0.25 } });
@@ -287,11 +331,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (formattedData.length > 0) {
                 // 객체 복사로 참조 분리
                 lastCandle = { ...formattedData[formattedData.length - 1] };
+                updateLegendWithLastCandle();
             }
         } catch (error) {
             console.error('차트 데이터 로드 실패:', error);
             document.getElementById('live-price').innerText = '데이터 오류';
         }
+    }
+
+    // 마우스가 차트 밖일 때나 새 데이터 갱신 시 레전드 업데이트
+    function updateLegendWithLastCandle() {
+        if(!lastCandle) return;
+        const legendO = document.getElementById('leg-o');
+        const legendH = document.getElementById('leg-h');
+        const legendL = document.getElementById('leg-l');
+        const legendC = document.getElementById('leg-c');
+        const legendVol = document.getElementById('leg-vol');
+        
+        if(legendO) legendO.innerText = lastCandle.open.toLocaleString();
+        if(legendH) legendH.innerText = lastCandle.high.toLocaleString();
+        if(legendL) legendL.innerText = lastCandle.low.toLocaleString();
+        if(legendC) legendC.innerText = lastCandle.close.toLocaleString();
+        if(legendVol) legendVol.innerText = lastCandle.volume.toLocaleString(undefined, {maximumFractionDigits: 2});
     }
 
     async function fetchLivePrice() {
@@ -351,6 +412,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     color: lastCandle.close >= lastCandle.open ? 'rgba(239, 68, 68, 0.5)' : 'rgba(79, 70, 229, 0.5)'
                 });
             }
+            
+            // 새 데이터 갱신 시 레전드 업데이트
+            updateLegendWithLastCandle();
         } catch (error) {
             console.error('현재가 갱신 실패:', error);
         }
