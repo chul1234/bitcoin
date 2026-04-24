@@ -693,6 +693,17 @@ body {
     overflow-y: auto;
 }
 
+.panel-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.panel-header h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
 .order-type-tabs {
     display: flex;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
