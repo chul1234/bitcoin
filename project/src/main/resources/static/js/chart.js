@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentMarket = 'KRW-BTC';
     let currentTimeframe = 'minutes/1'; // 캔들 기준 시간 (기본 1분)
     let lastCandle = null; // 마지막 분봉 데이터를 추적하여 실시간 1분봉 OHLC를 직접 계산
+    let isChartFrozen = false; // 차트 고정 상태 토글 플래그
 
     initDashboard();
 
@@ -321,6 +322,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderDrawings();
             });
         }
+
+        // ==========================================================================
+        // 차트 고정(Freeze) 기능
+        // ==========================================================================
+        const basicFreezeBtn = document.getElementById('basic-freeze-btn');
+        const tvFreezeBtn = document.getElementById('tv-freeze-btn');
+
+        function toggleFreeze() {
+            isChartFrozen = !isChartFrozen;
+            const iconText = isChartFrozen ? '▶️ 재생' : '⏸️ 고정';
+            if (basicFreezeBtn) {
+                basicFreezeBtn.innerText = iconText;
+                basicFreezeBtn.style.color = isChartFrozen ? 'var(--accent-color)' : 'var(--text-main)';
+            }
+            if (tvFreezeBtn) {
+                tvFreezeBtn.innerText = iconText;
+                tvFreezeBtn.style.color = isChartFrozen ? 'var(--accent-color)' : 'var(--text-main)';
+            }
+        }
+
+        if (basicFreezeBtn) basicFreezeBtn.addEventListener('click', toggleFreeze);
+        if (tvFreezeBtn) tvFreezeBtn.addEventListener('click', toggleFreeze);
 
         // ==========================================================================
         // 드로잉 기능 엔진 (캔버스 오버레이)
@@ -649,6 +672,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if(legendVol) legendVol.innerText = lastCandle.volume.toLocaleString(undefined, {maximumFractionDigits: 2});
     }
 
+    let frozenCandles = new Map();
+
     async function fetchLivePrice() {
         try {
             // 선택된 코인의 현재가 정보
@@ -683,10 +708,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 lastCandle.high = Math.max(lastCandle.high, ticker.trade_price);
                 lastCandle.low = Math.min(lastCandle.low, ticker.trade_price);
                 lastCandle.close = ticker.trade_price;
-                // 버그 수정: 24시간 누적량이 아닌, 1초마다 들어오는 개별 거래량(trade_volume)을 1분간 누적
                 lastCandle.volume += (ticker.trade_volume || 0); 
             } else {
-                // 새로운 1분이 시작되었다면, 새로운 캔들(OHLCV) 시작
+                // 새로운 분/시간이 시작되었다면, 새로운 캔들 시작
                 lastCandle = {
                     time: currentMinuteTime,
                     open: ticker.trade_price,
@@ -697,7 +721,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             }
 
-            // TradingView 차트 캔들 및 거래량 업데이트
+            if (isChartFrozen) {
+                // 차트 고정 상태: 백그라운드 맵에 시간대별 최신 캔들 상태를 버퍼링
+                frozenCandles.set(lastCandle.time, { ...lastCandle });
+                return; // UI 업데이트 건너뛰기
+            }
+
+            // 고정이 풀린 상태면 버퍼에 쌓인 누락된 캔들을 순서대로 일괄 업데이트
+            if (frozenCandles.size > 0) {
+                const buffered = Array.from(frozenCandles.values()).sort((a, b) => a.time - b.time);
+                for (const c of buffered) {
+                    candlestickSeries.update(c);
+                    if(volumeSeries) {
+                        volumeSeries.update({
+                            time: c.time,
+                            value: c.volume,
+                            color: c.close >= c.open ? 'rgba(239, 68, 68, 0.5)' : 'rgba(79, 70, 229, 0.5)'
+                        });
+                    }
+                }
+                frozenCandles.clear();
+            }
+
+            // TradingView 차트 캔들 및 거래량 실시간 업데이트
             candlestickSeries.update(lastCandle);
             if(volumeSeries) {
                 volumeSeries.update({
