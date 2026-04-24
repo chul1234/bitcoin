@@ -122,9 +122,18 @@
                                     <span class="timeframe-btn" data-timeframe="1Y">년</span>
                                 </div>
                             </div>
-                            <span style="cursor:pointer; display:flex; align-items:center; gap:0.25rem;">차트설정 <span style="font-size:0.6rem;">▼</span></span>
-                            <span style="cursor:pointer; display:flex; align-items:center; gap:0.25rem;">지표 <span style="font-size:0.6rem;">▼</span></span>
-                            <span style="cursor:pointer;">초기화</span>
+                            <span id="basic-indicator-btn" style="cursor:pointer; display:flex; align-items:center; gap:0.25rem; transition:color 0.2s;" onmouseover="this.style.color='var(--text-main)'" onmouseout="this.style.color='var(--text-muted)'"><i>fx</i> 지표 <span style="font-size:0.6rem;">▼</span></span>
+                            
+                            <div style="display:flex; gap:0.4rem; align-items:center; border-left:1px solid rgba(255,255,255,0.1); border-right:1px solid rgba(255,255,255,0.1); padding: 0 0.8rem; margin: 0 0.2rem;">
+                                <div class="color-btn" data-color="#3B82F6" style="width:12px; height:12px; border-radius:50%; background-color:#3B82F6; cursor:pointer; border:1px solid white;" title="파란색"></div>
+                                <div class="color-btn" data-color="#EF4444" style="width:12px; height:12px; border-radius:50%; background-color:#EF4444; cursor:pointer; border:1px solid transparent;" title="빨간색"></div>
+                                <div class="color-btn" data-color="#10B981" style="width:12px; height:12px; border-radius:50%; background-color:#10B981; cursor:pointer; border:1px solid transparent;" title="초록색"></div>
+                                <div class="color-btn" data-color="#F59E0B" style="width:12px; height:12px; border-radius:50%; background-color:#F59E0B; cursor:pointer; border:1px solid transparent;" title="노란색"></div>
+                                <div class="color-btn" data-color="#ffffff" style="width:12px; height:12px; border-radius:50%; background-color:#ffffff; cursor:pointer; border:1px solid transparent;" title="흰색"></div>
+                            </div>
+
+                            <span id="basic-draw-btn" style="cursor:pointer; display:flex; align-items:center; gap:0.25rem; transition:color 0.2s;" onmouseover="this.style.color='var(--text-main)'" onmouseout="this.style.color='var(--text-muted)'">✏️ 선 긋기</span>
+                            <span id="basic-reset-btn" style="cursor:pointer; transition:color 0.2s;" onmouseover="this.style.color='var(--text-main)'" onmouseout="this.style.color='var(--text-muted)'">🔄 초기화</span>
                         </div>
 
                         <!-- 2. 트레이딩 뷰 툴바 (아이콘 중심, 숨김 처리) -->
@@ -163,25 +172,52 @@
                         </div>
                     </div>
 
-                    <div id="chart-container" class="chart-wrapper" style="position:relative;">
-                        <!-- 차트 레전드 (오버레이) -->
-                        <div id="chart-legend" style="position:absolute; top:12px; left:12px; z-index:10; font-size:0.8rem; color:var(--text-muted); pointer-events:none; display:flex; flex-direction:column; gap:4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
-                            <div id="legend-title" style="font-weight:600; color:var(--text-main); font-size:0.9rem;">비트코인 (KRW-BTC) <span id="legend-tf">1분</span></div>
-                            <div id="legend-ohlc" style="display:flex; gap:6px;">
-                                <span>시 <span id="leg-o" style="color:var(--text-main);">0</span></span>
-                                <span>고 <span id="leg-h" style="color:var(--text-main);">0</span></span>
-                                <span>저 <span id="leg-l" style="color:var(--text-main);">0</span></span>
-                                <span>종 <span id="leg-c" style="color:var(--text-main);">0</span></span>
+                    <div class="chart-area-wrapper" style="display: flex; flex: 1; position: relative;">
+                        
+                        <!-- 트레이딩뷰 좌측 드로잉 툴바 -->
+                        <aside id="tv-drawing-tools" style="display:flex; flex-direction:column; width: 40px; border-right: 1px solid rgba(255,255,255,0.05); padding-top: 1rem; align-items:center; gap: 1rem; background-color: rgba(255,255,255,0.01);">
+                            <button id="draw-line-btn" title="추세선 그리기" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem; transition: color 0.2s;">📈</button>
+                            <button id="draw-horz-btn" title="가로줄 그리기" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem; transition: color 0.2s;">➖</button>
+                            <button id="draw-rect-btn" title="사각형(매물대) 그리기" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem; transition: color 0.2s;">🔲</button>
+                            
+                            <div style="width: 24px; height: 1px; background: rgba(255,255,255,0.1); margin: 0.5rem 0;"></div>
+                            
+                            <!-- 색상 선택 팔레트 -->
+                            <div id="color-palette" style="display:flex; flex-direction:column; gap:0.5rem; align-items:center;">
+                                <div class="color-btn" data-color="#3B82F6" style="width:16px; height:16px; border-radius:50%; background-color:#3B82F6; cursor:pointer; border:2px solid white;"></div>
+                                <div class="color-btn" data-color="#EF4444" style="width:16px; height:16px; border-radius:50%; background-color:#EF4444; cursor:pointer; border:2px solid transparent;"></div>
+                                <div class="color-btn" data-color="#10B981" style="width:16px; height:16px; border-radius:50%; background-color:#10B981; cursor:pointer; border:2px solid transparent;"></div>
+                                <div class="color-btn" data-color="#F59E0B" style="width:16px; height:16px; border-radius:50%; background-color:#F59E0B; cursor:pointer; border:2px solid transparent;"></div>
+                                <div class="color-btn" data-color="#ffffff" style="width:16px; height:16px; border-radius:50%; background-color:#ffffff; cursor:pointer; border:2px solid transparent;"></div>
                             </div>
-                            <div id="legend-ma" style="display:flex; gap:8px;">
-                                <span style="color:#EF4444;">MA(15): <span id="leg-ma15">0</span></span>
-                                <span style="color:#10B981;">MA(50): <span id="leg-ma50">0</span></span>
+                            
+                            <div style="flex:1;"></div>
+                            <button id="clear-drawings-btn" title="모든 선 지우기" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem; transition: color 0.2s; margin-bottom: 1rem;">🗑️</button>
+                        </aside>
+
+                        <div id="chart-container" class="chart-wrapper" style="position:relative; flex: 1;">
+                            <!-- 드로잉 캔버스 오버레이 (포인터 이벤트를 통과시키되, 그리기 모드일 때만 활성화) -->
+                            <canvas id="drawing-canvas" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index: 5; pointer-events:none;"></canvas>
+
+                            <!-- 차트 레전드 (오버레이) -->
+                            <div id="chart-legend" style="position:absolute; top:12px; left:12px; z-index:10; font-size:0.8rem; color:var(--text-muted); pointer-events:none; display:flex; flex-direction:column; gap:4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
+                                <div id="legend-title" style="font-weight:600; color:var(--text-main); font-size:0.9rem;">비트코인 (KRW-BTC) <span id="legend-tf">1분</span></div>
+                                <div id="legend-ohlc" style="display:flex; gap:6px;">
+                                    <span>시 <span id="leg-o" style="color:var(--text-main);">0</span></span>
+                                    <span>고 <span id="leg-h" style="color:var(--text-main);">0</span></span>
+                                    <span>저 <span id="leg-l" style="color:var(--text-main);">0</span></span>
+                                    <span>종 <span id="leg-c" style="color:var(--text-main);">0</span></span>
+                                </div>
+                                <div id="legend-ma" style="display:flex; gap:8px; display:none;">
+                                    <span style="color:#EF4444;">MA(15): <span id="leg-ma15">0</span></span>
+                                    <span style="color:#10B981;">MA(50): <span id="leg-ma50">0</span></span>
+                                </div>
+                                <div id="legend-vol" style="color:#26a69a;">
+                                    Vol: <span id="leg-vol">0</span>
+                                </div>
                             </div>
-                            <div id="legend-vol" style="color:#26a69a;">
-                                Vol: <span id="leg-vol">0</span>
-                            </div>
+                            <!-- 차트가 여기에 렌더링됩니다 -->
                         </div>
-                        <!-- 차트가 여기에 렌더링됩니다 -->
                     </div>
                     
                     <!-- 호가창이 들어갈 임시 자리 (추후 구현) -->

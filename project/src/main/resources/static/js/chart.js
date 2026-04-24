@@ -237,6 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const toolbarBasic = document.getElementById('toolbar-basic');
         const toolbarTv = document.getElementById('toolbar-tv');
         const legendMa = document.getElementById('legend-ma');
+        const tvDrawingTools = document.getElementById('tv-drawing-tools');
 
         if (chartModeRadios.length > 0) {
             chartModeRadios.forEach(radio => {
@@ -245,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // 1. 상단 툴바 UI 교체
                         if (toolbarBasic) toolbarBasic.style.display = 'none';
                         if (toolbarTv) toolbarTv.style.display = 'flex';
+                        if (tvDrawingTools) tvDrawingTools.style.display = 'flex';
                         
                         // 2. 차트 내부 내용 변경: 트레이딩뷰 모드에서는 이동평균선을 깨끗하게 숨김
                         if (ma15Series) ma15Series.applyOptions({ visible: false });
@@ -259,6 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // 1. 상단 툴바 UI 교체
                         if (toolbarBasic) toolbarBasic.style.display = 'flex';
                         if (toolbarTv) toolbarTv.style.display = 'none';
+                        if (tvDrawingTools) tvDrawingTools.style.display = 'none';
                         
                         // 2. 차트 내부 내용 변경: 기본 차트 모드에서는 이동평균선을 다시 노출
                         if (ma15Series) ma15Series.applyOptions({ visible: true });
@@ -276,6 +279,291 @@ document.addEventListener('DOMContentLoaded', () => {
             const initialCheckedRadio = Array.from(chartModeRadios).find(r => r.checked);
             if (initialCheckedRadio) {
                 initialCheckedRadio.dispatchEvent(new Event('change'));
+            }
+        }
+
+
+        // ==========================================================================
+        // 기본 차트 전용 툴바 버튼 연동
+        // ==========================================================================
+        const basicIndicatorBtn = document.getElementById('basic-indicator-btn');
+        const basicDrawBtn = document.getElementById('basic-draw-btn');
+        const basicResetBtn = document.getElementById('basic-reset-btn');
+        
+        let isBasicMaVisible = true;
+        
+        if (basicIndicatorBtn) {
+            basicIndicatorBtn.addEventListener('click', () => {
+                isBasicMaVisible = !isBasicMaVisible;
+                if (ma15Series) ma15Series.applyOptions({ visible: isBasicMaVisible });
+                if (ma50Series) ma50Series.applyOptions({ visible: isBasicMaVisible });
+                const legendMa = document.getElementById('legend-ma');
+                if (legendMa) legendMa.style.display = isBasicMaVisible ? 'flex' : 'none';
+                
+                // 버튼 스타일 변경
+                basicIndicatorBtn.style.color = isBasicMaVisible ? 'var(--text-main)' : 'var(--text-muted)';
+            });
+        }
+        
+        if (basicDrawBtn) {
+            basicDrawBtn.addEventListener('click', () => {
+                currentMode = currentMode === 'line' ? 'none' : 'line';
+                updateDrawingUI();
+                basicDrawBtn.style.color = currentMode === 'line' ? 'var(--accent-color)' : 'var(--text-main)';
+            });
+        }
+        
+        if (basicResetBtn) {
+            basicResetBtn.addEventListener('click', () => {
+                // 차트 스케일 초기화 및 그려진 선 모두 지우기
+                chart.timeScale().fitContent();
+                drawings = [];
+                renderDrawings();
+            });
+        }
+
+        // ==========================================================================
+        // 드로잉 기능 엔진 (캔버스 오버레이)
+        // ==========================================================================
+        const canvas = document.getElementById('drawing-canvas');
+        const ctx = canvas ? canvas.getContext('2d') : null;
+        
+        // 저장된 선 객체 배열: { type, p1, p2, color }
+        let drawings = []; 
+        let currentMode = 'none'; 
+        let isDrawing = false;
+        let startPoint = null;
+        let currentPoint = null;
+        let currentColor = '#3B82F6'; // 기본 파란색
+
+        const drawLineBtn = document.getElementById('draw-line-btn');
+        const drawHorzBtn = document.getElementById('draw-horz-btn');
+        const drawRectBtn = document.getElementById('draw-rect-btn');
+        const clearDrawingsBtn = document.getElementById('clear-drawings-btn');
+        const colorBtns = document.querySelectorAll('.color-btn');
+
+        if (colorBtns.length > 0) {
+            colorBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // 모든 버튼 테두리 초기화
+                    colorBtns.forEach(b => b.style.border = '2px solid transparent');
+                    // 선택된 버튼 하이라이트
+                    e.target.style.border = '2px solid white';
+                    currentColor = e.target.getAttribute('data-color');
+                });
+            });
+        }
+
+        if (drawLineBtn) {
+            drawLineBtn.addEventListener('click', () => {
+                currentMode = currentMode === 'line' ? 'none' : 'line';
+                updateDrawingUI();
+            });
+        }
+        if (drawHorzBtn) {
+            drawHorzBtn.addEventListener('click', () => {
+                currentMode = currentMode === 'horz' ? 'none' : 'horz';
+                updateDrawingUI();
+            });
+        }
+        if (drawRectBtn) {
+            drawRectBtn.addEventListener('click', () => {
+                currentMode = currentMode === 'rect' ? 'none' : 'rect';
+                updateDrawingUI();
+            });
+        }
+        if (clearDrawingsBtn) {
+            clearDrawingsBtn.addEventListener('click', () => {
+                drawings = [];
+                renderDrawings();
+            });
+        }
+
+        function updateDrawingUI() {
+            if(drawLineBtn) drawLineBtn.style.color = currentMode === 'line' ? 'var(--accent-color)' : 'var(--text-muted)';
+            if(drawHorzBtn) drawHorzBtn.style.color = currentMode === 'horz' ? 'var(--accent-color)' : 'var(--text-muted)';
+            if(drawRectBtn) drawRectBtn.style.color = currentMode === 'rect' ? 'var(--accent-color)' : 'var(--text-muted)';
+            if(basicDrawBtn) basicDrawBtn.style.color = currentMode === 'line' ? 'var(--accent-color)' : 'var(--text-main)';
+            
+            // 그리기 모드일 때 차트 패닝 막기 및 캔버스로 이벤트 넘기기
+            if (currentMode !== 'none') {
+                chart.applyOptions({ handleScroll: false, handleScale: false });
+                if(canvas) canvas.style.pointerEvents = 'auto';
+            } else {
+                chart.applyOptions({ handleScroll: true, handleScale: true });
+                if(canvas) canvas.style.pointerEvents = 'none';
+            }
+        }
+
+        function resizeCanvas() {
+            if (!canvas || !ctx) return;
+            const container = document.getElementById('chart-container');
+            
+            const rect = container.getBoundingClientRect();
+            if(rect.width === 0 || rect.height === 0) return;
+            
+            // 고해상도(Retina) 디스플레이에서 선이 흐리거나 얇아지는 현상 방지
+            const dpr = window.devicePixelRatio || 1;
+            
+            // 실제 캔버스의 해상도를 디스플레이 픽셀에 맞춤
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            
+            // 화면에 표시되는 CSS 크기는 원래 컨테이너 크기로 고정
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+            
+            // 컨텍스트 스케일링
+            ctx.scale(dpr, dpr);
+            
+            renderDrawings();
+        }
+
+        // 차트 스크롤/줌 시 다시 그리기 연동
+        chart.timeScale().subscribeVisibleTimeRangeChange(() => renderDrawings());
+        chart.timeScale().subscribeVisibleLogicalRangeChange(() => renderDrawings());
+        
+        const ro = new ResizeObserver(() => resizeCanvas());
+        ro.observe(document.getElementById('chart-container'));
+
+        function getChartPoint(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            const logical = chart.timeScale().coordinateToLogical(x);
+            const price = candlestickSeries.coordinateToPrice(y);
+            return { logical, price, x, y };
+        }
+
+        if (canvas) {
+            canvas.addEventListener('mousedown', (e) => {
+                if (currentMode === 'none') return;
+                
+                const pt = getChartPoint(e);
+                if (pt.logical === null || pt.price === null) return;
+
+                isDrawing = true;
+                startPoint = { logical: pt.logical, price: pt.price };
+                currentPoint = { logical: pt.logical, price: pt.price };
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isDrawing || currentMode === 'none') return;
+                
+                const pt = getChartPoint(e);
+                if (pt.logical === null || pt.price === null) return;
+                
+                currentPoint = { logical: pt.logical, price: pt.price };
+                renderDrawings();
+            });
+
+            canvas.addEventListener('mouseup', () => {
+                if (!isDrawing) return;
+                isDrawing = false;
+                
+                if (startPoint && currentPoint) {
+                    drawings.push({
+                        type: currentMode,
+                        p1: { ...startPoint },
+                        p2: { ...currentPoint },
+                        color: currentColor // 선택된 색상 저장
+                    });
+                }
+                
+                currentMode = 'none'; // 1회 그리고 모드 종료
+                updateDrawingUI();
+                renderDrawings();
+            });
+            
+            canvas.addEventListener('mouseleave', () => {
+                if(isDrawing) {
+                    isDrawing = false;
+                    renderDrawings();
+                }
+            });
+        }
+
+        function renderDrawings() {
+            if (!ctx || !canvas) return;
+            // scale된 상태이므로 width/height에 devicePixelRatio를 나누어 지워야 함
+            const dpr = window.devicePixelRatio || 1;
+            ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+            
+            drawings.forEach(d => drawLineObject(d));
+
+            if (isDrawing && startPoint && currentPoint) {
+                drawLineObject({
+                    type: currentMode,
+                    p1: startPoint,
+                    p2: currentPoint,
+                    color: currentColor
+                });
+            }
+        }
+
+        function hexToRgba(hex, alpha) {
+            if (!hex) return `rgba(59, 130, 246, ${alpha})`;
+            let r = parseInt(hex.slice(1, 3), 16),
+                g = parseInt(hex.slice(3, 5), 16),
+                b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function drawLineObject(d) {
+            const x1 = chart.timeScale().logicalToCoordinate(d.p1.logical);
+            const y1 = candlestickSeries.priceToCoordinate(d.p1.price);
+            
+            const x2 = chart.timeScale().logicalToCoordinate(d.p2.logical);
+            const y2 = candlestickSeries.priceToCoordinate(d.p2.price);
+
+            if (y1 === null) return; // 가격 범위를 벗어난 경우 (에러 방지)
+            
+            const color = d.color || '#3B82F6';
+            
+            if (d.type === 'horz') {
+                ctx.beginPath();
+                ctx.strokeStyle = color; 
+                ctx.lineWidth = 2;
+                ctx.moveTo(0, y1);
+                ctx.lineTo(canvas.width, y1);
+                ctx.stroke();
+            } else if (d.type === 'line') {
+                if (x1 === null || x2 === null || y2 === null) return;
+                
+                // 선 그리기
+                ctx.beginPath();
+                ctx.strokeStyle = color; 
+                ctx.lineWidth = 2;
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+                
+                // 시작점 동그라미(핸들)
+                ctx.beginPath();
+                ctx.fillStyle = color;
+                ctx.arc(x1, y1, 4, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // 끝점 동그라미(핸들)
+                ctx.beginPath();
+                ctx.arc(x2, y2, 4, 0, 2 * Math.PI);
+                ctx.fill();
+            } else if (d.type === 'rect') {
+                if (x1 === null || x2 === null || y2 === null) return;
+                
+                const width = x2 - x1;
+                const height = y2 - y1;
+                
+                // 매물대 사각형 면 채우기 (반투명)
+                ctx.beginPath();
+                ctx.fillStyle = hexToRgba(color, 0.15); 
+                ctx.fillRect(x1, y1, width, height);
+                
+                // 사각형 테두리
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x1, y1, width, height);
             }
         }
 
