@@ -19,6 +19,9 @@ public class AuthController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private coinproject.coin.repository.UserRoleRepository userRoleRepository;
+
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest request) {
         Map<String, Object> response = new HashMap<>();
@@ -74,7 +77,11 @@ public class AuthController {
                 .email(request.getEmail())
                 .build();
         
-        userRepository.save(newUser);
+        User savedUser = userRepository.save(newUser);
+
+        // 기본 권한 'USER' 부여
+        coinproject.coin.entity.UserRole defaultRole = new coinproject.coin.entity.UserRole(savedUser.getUserId(), "USER");
+        userRoleRepository.save(defaultRole);
 
         response.put("success", true);
         response.put("message", "회원가입이 완료되었습니다.");
