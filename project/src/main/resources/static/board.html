@@ -119,49 +119,19 @@
                 </div>
                 <div style="color:var(--text-main); font-size:1rem; line-height:1.6; white-space:pre-wrap; margin-bottom: 3rem;" id="detail-content">내용</div>
                 
-                <!-- 댓글 영역 (정적 예시) -->
+                <!-- 댓글 영역 (동적 렌더링) -->
                 <div class="comments-section" style="border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
-                    <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-main); margin-bottom: 1rem;">댓글 <span style="color: var(--accent-color);">2</span></h3>
+                    <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-main); margin-bottom: 1rem;">댓글 <span id="comment-count" style="color: var(--accent-color);">0</span></h3>
                     
-                    <!-- 댓글 작성 폼 -->
+                    <!-- 일반 댓글 작성 폼 -->
                     <div class="comment-write-form" style="display: flex; gap: 0.5rem; margin-bottom: 2rem;">
-                        <input type="text" class="form-input" style="flex: 1; padding: 0.8rem;" placeholder="댓글을 남겨보세요." autocomplete="off">
-                        <button class="submit-btn" style="padding: 0.8rem 1.2rem;">등록</button>
+                        <input type="text" id="comment-input" class="form-input" style="flex: 1; padding: 0.8rem;" placeholder="댓글을 남겨보세요." autocomplete="off">
+                        <button id="save-comment-btn" class="submit-btn" style="padding: 0.8rem 1.2rem;">등록</button>
                     </div>
 
-                    <!-- 댓글 목록 -->
-                    <div class="comments-list" style="display: flex; flex-direction: column; gap: 1.5rem;">
-                        <!-- 일반 댓글 예시 -->
-                        <div class="comment-item">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                <div class="post-author"><div class="author-badge anon">익</div> 익명1</div>
-                                <div class="post-meta">방금 전</div>
-                            </div>
-                            <div style="color: var(--text-main); font-size: 0.95rem; line-height: 1.5; margin-bottom: 0.5rem;">
-                                오, 이거 정말 유용한 정보네요! 지금 차트 분석 중이었는데 딱 필요한 내용이었습니다. 감사합니다.
-                            </div>
-                            <div style="font-size: 0.85rem;">
-                                <button style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; font-weight:500;">답글 달기</button>
-                            </div>
-                        </div>
-
-                        <!-- 대댓글 예시 -->
-                        <div class="comment-item reply" style="margin-left: 2.5rem; padding-left: 1rem; border-left: 2px solid rgba(255,255,255,0.1); position: relative;">
-                            <!-- ㄴ 아이콘 역할을 하는 시각적 요소 -->
-                            <div style="position: absolute; left: -1.8rem; top: 0.2rem; color: var(--text-muted);">
-                                └
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                <div class="post-author"><div class="author-badge" style="background:#10B981;">B</div> 비트마스터</div>
-                                <div class="post-meta">방금 전</div>
-                            </div>
-                            <div style="color: var(--text-main); font-size: 0.95rem; line-height: 1.5; margin-bottom: 0.5rem;">
-                                도움이 되셨다니 다행입니다! 혹시 추가로 궁금하신 점 있으면 언제든 질문 남겨주세요.
-                            </div>
-                            <div style="font-size: 0.85rem;">
-                                <button style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; font-weight:500;">답글 달기</button>
-                            </div>
-                        </div>
+                    <!-- 댓글 목록 컨테이너 -->
+                    <div id="comments-list" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <!-- JS에서 렌더링 됨 -->
                     </div>
                 </div>
             </div>

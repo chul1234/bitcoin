@@ -156,7 +156,147 @@ document.addEventListener('DOMContentLoaded', () => {
             detailFooter.style.display = 'none';
         }
         
+        // 댓글 렌더링
+        renderComments(post.id);
+        
+        // 새 댓글 등록 이벤트 바인딩
+        const saveCommentBtn = document.getElementById('save-comment-btn');
+        const commentInput = document.getElementById('comment-input');
+        
+        // 기존 리스너 제거 (중복 방지)
+        const newSaveCommentBtn = saveCommentBtn.cloneNode(true);
+        saveCommentBtn.parentNode.replaceChild(newSaveCommentBtn, saveCommentBtn);
+        
+        newSaveCommentBtn.addEventListener('click', () => {
+            const content = commentInput.value.trim();
+            if (!content) return alert('댓글 내용을 입력해주세요.');
+            
+            const newComment = {
+                id: Date.now(),
+                postId: post.id,
+                parentId: null, // 최상위 댓글
+                content: content,
+                author: currentUser.name,
+                isAnon: false, // 기본은 실명 (필요 시 토글 추가 가능)
+                date: new Date().toISOString(),
+                userId: currentUser.id
+            };
+            
+            let allComments = JSON.parse(localStorage.getItem('bitcoin_board_comments')) || [];
+            allComments.push(newComment);
+            localStorage.setItem('bitcoin_board_comments', JSON.stringify(allComments));
+            
+            commentInput.value = '';
+            renderComments(post.id);
+        });
+
         modalOverlay.classList.add('active');
+    }
+
+    // 댓글 렌더링 함수
+    function renderComments(postId) {
+        const commentsList = document.getElementById('comments-list');
+        const commentCount = document.getElementById('comment-count');
+        commentsList.innerHTML = '';
+        
+        let allComments = JSON.parse(localStorage.getItem('bitcoin_board_comments')) || [];
+        const postComments = allComments.filter(c => c.postId === postId);
+        
+        commentCount.innerText = postComments.length;
+        
+        if (postComments.length === 0) {
+            commentsList.innerHTML = '<div style="color:var(--text-muted); font-size:0.9rem; padding:1rem 0;">등록된 댓글이 없습니다.</div>';
+            return;
+        }
+
+        // 최상위 댓글과 대댓글 분리
+        const topComments = postComments.filter(c => !c.parentId);
+        const replies = postComments.filter(c => c.parentId);
+
+        topComments.forEach(comment => {
+            // 부모 댓글 렌더링
+            const commentDiv = document.createElement('div');
+            commentDiv.className = 'comment-item';
+            commentDiv.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    ${renderAuthorBadge(comment.author, comment.isAnon)}
+                    <div class="post-meta">${formatDate(comment.date)}</div>
+                </div>
+                <div style="color: var(--text-main); font-size: 0.95rem; line-height: 1.5; margin-bottom: 0.5rem;">
+                    ${comment.content}
+                </div>
+                <div style="font-size: 0.85rem; margin-bottom: 0.5rem;">
+                    <button class="reply-btn" data-id="${comment.id}" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; font-weight:500;">답글 달기</button>
+                </div>
+                <div class="reply-form-container" id="reply-form-${comment.id}" style="display:none; margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+                    <input type="text" class="form-input reply-input" style="flex: 1; padding: 0.6rem; font-size: 0.85rem;" placeholder="답글을 남겨보세요." autocomplete="off">
+                    <button class="submit-btn save-reply-btn" data-parent-id="${comment.id}" style="padding: 0.6rem 1rem; font-size: 0.85rem;">등록</button>
+                </div>
+            `;
+            // 초기엔 숨김
+            commentDiv.querySelector('.reply-form-container').style.display = 'none';
+            commentsList.appendChild(commentDiv);
+
+            // 해당 부모의 대댓글 렌더링
+            const childReplies = replies.filter(r => r.parentId === comment.id);
+            childReplies.forEach(reply => {
+                const replyDiv = document.createElement('div');
+                replyDiv.className = 'comment-item reply';
+                replyDiv.style.cssText = 'margin-left: 2.5rem; padding-left: 1rem; border-left: 2px solid rgba(255,255,255,0.1); position: relative; margin-top: 1rem;';
+                replyDiv.innerHTML = `
+                    <div style="position: absolute; left: -1.8rem; top: 0.2rem; color: var(--text-muted);">└</div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        ${renderAuthorBadge(reply.author, reply.isAnon)}
+                        <div class="post-meta">${formatDate(reply.date)}</div>
+                    </div>
+                    <div style="color: var(--text-main); font-size: 0.95rem; line-height: 1.5; margin-bottom: 0.5rem;">
+                        ${reply.content}
+                    </div>
+                `;
+                commentsList.appendChild(replyDiv);
+            });
+        });
+
+        // 답글 달기 버튼 이벤트
+        document.querySelectorAll('.reply-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const commentId = e.target.getAttribute('data-id');
+                const form = document.getElementById(`reply-form-${commentId}`);
+                form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+                if (form.style.display === 'flex') {
+                    form.querySelector('.reply-input').focus();
+                }
+            });
+        });
+
+        // 대댓글 등록 이벤트
+        document.querySelectorAll('.save-reply-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const parentId = parseInt(e.target.getAttribute('data-parent-id'));
+                const container = document.getElementById(`reply-form-${parentId}`);
+                const input = container.querySelector('.reply-input');
+                const content = input.value.trim();
+                
+                if (!content) return alert('답글 내용을 입력해주세요.');
+                
+                const newReply = {
+                    id: Date.now(),
+                    postId: postId,
+                    parentId: parentId,
+                    content: content,
+                    author: currentUser.name,
+                    isAnon: false,
+                    date: new Date().toISOString(),
+                    userId: currentUser.id
+                };
+                
+                let allComments = JSON.parse(localStorage.getItem('bitcoin_board_comments')) || [];
+                allComments.push(newReply);
+                localStorage.setItem('bitcoin_board_comments', JSON.stringify(allComments));
+                
+                renderComments(postId);
+            });
+        });
     }
 
     // 글쓰기 모달 열기
