@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비트코인 거래소 - 관리자 페이지</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter Tight:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 관리자 페이지 전용 스타일 */
+        .admin-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+        .admin-tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+        .admin-tab:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .admin-tab.active {
+            color: var(--accent-color);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--panel-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .admin-table th, .admin-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .admin-table th {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .admin-table td {
+            color: var(--text-main);
+        }
+        .action-btn {
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            border: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-edit {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+        .btn-edit:hover { background: rgba(255, 255, 255, 0.2); }
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: #EF4444;
+        }
+        .btn-delete:hover { background: rgba(239, 68, 68, 0.2); }
+        
+        /* 다중 등록 폼 스타일 */
+        .multi-form-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .user-form-block {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .user-form-block h4 {
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.8rem;
+        }
+        .remove-form-btn {
+            background: rgba(239, 68, 68, 0.15);
+            color: #EF4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+        .remove-form-btn:hover {
+            background: #EF4444;
+            color: white;
+        }
+        
+        .admin-form-input {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 1rem;
+            margin-top: 0.4rem;
+            transition: border-color 0.2s;
+        }
+        .admin-form-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        .admin-form-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .primary-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .primary-btn:hover {
+            background-color: #2563eb;
+        }
+        
+        /* 권한 체크박스 스타일 */
+        .role-checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-right: 1rem;
+            cursor: pointer;
+        }
+        .role-checkbox-label input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-color);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="dashboard-screen" class="screen view-active">
+        <div class="dashboard-layout" style="grid-template-columns: 80px 1fr;">
+            
+            <!-- 좌측 네비게이션 -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <span class="logo-text">CD</span>
+                </div>
+                <nav class="nav-menu">
+                    <button class="nav-item" title="차트 보드" onclick="window.location.href='dashboard.html'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </button>
+                    <button class="nav-item" title="투자 내역" onclick="window.location.href='investment.html'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                    </button>
+                    <button class="nav-item" title="커뮤니티" onclick="window.location.href='board.html'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </button>
+                    <button class="nav-item" title="마이페이지" onclick="window.location.href='mypage.html'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </button>
+                    <!-- 관리자 메뉴 탭 -->
+                    <button class="nav-item active" title="관리" onclick="window.location.href='admin.html'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                    </button>
+                </nav>
+                <div class="sidebar-footer">
+                    <button id="logout-btn" class="nav-item" title="로그아웃"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+                </div>
+            </aside>
+
+            <!-- 메인 콘텐츠 영역 -->
+            <main class="main-content" style="padding: 3rem; background-color: var(--bg-color); height: 100vh; overflow-y: auto;">
+                <header style="margin-bottom: 2rem;">
+                    <h1 style="color: var(--text-main); font-size: 1.8rem; font-weight: 700;">DB 사용자 관리</h1>
+                </header>
+
+                <div class="admin-tabs">
+                    <button class="admin-tab active" id="tab-user-list">사용자 목록</button>
+                    <button class="admin-tab" id="tab-role-manage">권한 관리</button>
+                </div>
+
+                <!-- 1. 사용자 목록 뷰 -->
+                <div id="view-user-list">
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                        <button id="btn-show-register" class="primary-btn" style="width: auto;">새 사용자 등록</button>
+                    </div>
+                    
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>로그인 ID (PK)</th>
+                                <th>이름</th>
+                                <th>이메일</th>
+                                <th>역할</th>
+                                <th style="text-align: right;">작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body">
+                            <!-- JS로 렌더링 -->
+                            <tr>
+                                <td>admin123</td>
+                                <td>관리자</td>
+                                <td>admin@a.com</td>
+                                <td>관리자, 사용자</td>
+                                <td style="text-align: right;">
+                                    <button class="action-btn btn-edit">수정</button>
+                                    <button class="action-btn btn-delete">삭제</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 1-1. 새 사용자 다중 등록 뷰 -->
+                <div id="view-user-register" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 style="font-size: 1.4rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                            새 사용자 등록 
+                            <button id="btn-add-form" class="primary-btn" style="width: 32px; height: 32px; padding: 0; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;">+</button>
+                        </h2>
+                        <button id="btn-cancel-register" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-weight: 500;">취소 (목록으로 돌아가기)</button>
+                    </div>
+
+                    <div class="multi-form-container" id="multi-form-container">
+                        <!-- 동적 폼 블록이 들어갈 자리 -->
+                    </div>
+                    
+                    <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
+                        <button id="btn-submit-register" class="primary-btn" style="width: auto; padding: 0.8rem 2rem;">일괄 등록 저장</button>
+                    </div>
+                </div>
+
+                <!-- 2. 권한 관리 뷰 -->
+                <div id="view-role-manage" style="display: none;">
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">이 페이지에서 사용자의 권한을 변경할 수 있습니다. (다중 선택 가능)</p>
+                    
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>로그인 ID</th>
+                                <th>이름</th>
+                                <th>권한 설정 (체크박스)</th>
+                                <th style="text-align: right;">저장</th>
+                            </tr>
+                        </thead>
+                        <tbody id="role-table-body">
+                            <!-- JS로 렌더링 -->
+                            <tr>
+                                <td>alice</td>
+                                <td>엘리스</td>
+                                <td>
+                                    <label class="role-checkbox-label">
+                                        <input type="checkbox" value="ADMIN"> 관리자
+                                    </label>
+                                    <label class="role-checkbox-label">
+                                        <input type="checkbox" value="USER" checked> 사용자
+                                    </label>
+                                </td>
+                                <td style="text-align: right;">
+                                    <button class="action-btn btn-edit" style="background: var(--accent-color); color: white;">변경사항 저장</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- 스크립트 연결 -->
+    <script src="js/admin.js"></script>
+</body>
+</html>
