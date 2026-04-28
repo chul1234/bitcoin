@@ -11,6 +11,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const signupScreen = document.getElementById('signup-screen');
     const introScreen = document.getElementById('intro-screen');
 
+    // 공통: 관리자가 아니면 사이드바 관리 탭 숨기기
+    const adminNavItems = document.querySelectorAll('.nav-item[title="관리"]');
+    if (adminNavItems.length > 0) {
+        const rolesStr = sessionStorage.getItem('loggedInUserRoles');
+        let isAdmin = false;
+        if (rolesStr) {
+            try {
+                isAdmin = JSON.parse(rolesStr).includes('ADMIN');
+            } catch(e) {}
+        }
+        if (!isAdmin) {
+            adminNavItems.forEach(item => item.style.display = 'none');
+        }
+    }
+
     // Navigation toggles
     document.getElementById('to-signup').addEventListener('click', (e) => {
         e.preventDefault();
@@ -106,9 +121,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                // 로그인 성공 시 세션 스토리지에 유저 식별자 저장
+                // 로그인 성공 시 세션 스토리지에 유저 식별자 및 권한 저장
                 sessionStorage.setItem('loggedInUserId', id);
                 sessionStorage.setItem('loggedInUserName', data.userName || id);
+                if (data.roles) {
+                    sessionStorage.setItem('loggedInUserRoles', JSON.stringify(data.roles));
+                }
 
                 loginScreen.classList.remove('view-active');
                 loginScreen.classList.add('hidden');

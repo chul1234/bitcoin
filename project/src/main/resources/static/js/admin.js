@@ -1,4 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // 관리자 권한 체크 (프론트엔드 단)
+    const rolesStr = sessionStorage.getItem('loggedInUserRoles');
+    let isAdmin = false;
+    if (rolesStr) {
+        try {
+            const roles = JSON.parse(rolesStr);
+            isAdmin = roles.includes('ADMIN');
+        } catch(e) {}
+    }
+    
+    if (!isAdmin) {
+        alert('관리자 권한이 필요합니다.');
+        window.location.href = 'dashboard.html';
+        return; // 이하 스크립트 실행 중지
+    }
+
     // 탭 및 뷰 요소
     const tabUserList = document.getElementById('tab-user-list');
     const tabRoleManage = document.getElementById('tab-role-manage');
@@ -150,8 +166,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             <input type="checkbox" class="role-check-user" data-uid="${user.userId}" value="USER" ${isUser ? 'checked' : ''}> 사용자
                         </label>
                     </td>
-                    <td style="text-align: right;">
-                        <button class="action-btn btn-edit btn-save-roles" data-uid="${user.userId}" style="background: var(--accent-color); color: white;">변경사항 저장</button>
+                    <td style="text-align: center;">
+                        <button class="action-btn btn-edit btn-save-roles" data-uid="${user.userId}" style="background: var(--accent-color); color: white; display: inline-block; width: 100%;">변경사항 저장</button>
                     </td>
                 </tr>
             `;

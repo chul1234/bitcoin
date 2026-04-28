@@ -36,9 +36,15 @@ public class AuthController {
         Optional<User> userOpt = userRepository.findByUserId(request.getId());
 
         if (userOpt.isPresent() && userOpt.get().getPassword().equals(request.getPassword())) {
+            User user = userOpt.get();
+            // 사용자의 권한 목록 조회
+            java.util.List<coinproject.coin.entity.UserRole> roles = userRoleRepository.findByUserId(user.getUserId());
+            java.util.List<String> roleNames = roles.stream().map(coinproject.coin.entity.UserRole::getRoleId).collect(java.util.stream.Collectors.toList());
+
             response.put("success", true);
             response.put("message", "로그인 성공");
-            response.put("userName", userOpt.get().getName());
+            response.put("userName", user.getName());
+            response.put("roles", roleNames); // 권한 정보 추가
             response.put("token", "jwt-token-" + System.currentTimeMillis());
             return ResponseEntity.ok(response);
         } else {
