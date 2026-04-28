@@ -45,4 +45,58 @@ public class UserService {
 
         return savedUser;
     }
+
+    // --- 관리자 전용 로직 ---
+
+    /**
+     * 모든 사용자와 그들의 권한 정보를 함께 반환
+     */
+    @Transactional(readOnly = true)
+    public java.util.List<java.util.Map<String, Object>> getAllUsersWithRoles() {
+        java.util.List<User> users = userRepository.findAll();
+        java.util.List<java.util.Map<String, Object>> result = new java.util.ArrayList<>();
+
+        for (User user : users) {
+            java.util.List<UserRole> roles = userRoleRepository.findByUserId(user.getUserId());
+            java.util.List<String> roleNames = roles.stream().map(UserRole::getRoleId).collect(java.util.stream.Collectors.toList());
+            
+            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            map.put("userId", user.getUserId());
+            map.put("name", user.getName());
+            map.put("email", user.getEmail());
+            map.put("roles", roleNames);
+            result.add(map);
+        }
+        return result;
+    }
+
+    /**
+     * 특정 사용자의 권한 일괄 업데이트
+     */
+    @Transactional
+    public void updateUserRoles(String userId, java.util.List<String> newRoles) {
+        // 기존 권한 싹 삭제
+        userRoleRepository.deleteByUserId(userId);
+
+        // 새 권한 등록
+        if (newRoles != null) {
+            for (String roleId : newRoles) {
+                userRoleRepository.save(new UserRole(userId, roleId));
+            }
+        }
+    }
+
+    /**
+     * 다중 사용자 일괄 등록 (관리자용)
+     */
+    @Transactional
+    public void registerUsersBatch(java.util.List<java.util.Map<String, String>> usersData) {
+        for (java.util.Map<String, String> data : usersData) {
+            String userId = data.get("userId");
+            if (userRepository.findByUserId(userId).isPresent()) {
+                continue; // 이미 있는 아이디는 무시 (또는 에러 처리 가능)
+            }
+            registerUser(userId, data.get("email"), data.get("password"), data.get("name"));
+        }
+    }
 }
