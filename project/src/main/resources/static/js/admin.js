@@ -137,12 +137,125 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${user.email}</td>
                     <td>${roleStr}</td>
                     <td style="text-align: right;">
-                        <!-- 삭제/수정 버튼은 추후 API 구현 후 연동 -->
-                        <button class="action-btn btn-edit">수정</button>
-                        <button class="action-btn btn-delete">삭제</button>
+                        <button class="action-btn btn-edit" data-uid="${user.userId}" data-email="${user.email}">수정</button>
+                        <button class="action-btn btn-delete" data-uid="${user.userId}">삭제</button>
                     </td>
                 </tr>
             `;
+        });
+
+        // 삭제 이벤트 바인딩
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const uid = e.target.getAttribute('data-uid');
+                if (confirm(`'${uid}' 사용자를 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
+                    try {
+                        const response = await fetch(`/api/user/${uid}`, {
+                            method: 'DELETE'
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            alert('사용자가 삭제되었습니다.');
+                            loadUsers(); // 목록 새로고침
+                        } else {
+                            alert(result.message || '삭제에 실패했습니다.');
+                        }
+                    } catch (err) {
+                        alert('서버 오류가 발생했습니다.');
+                    }
+                }
+            });
+        });
+
+        // 수정 모달 이벤트 바인딩
+        document.querySelectorAll('.btn-edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // 권한 관리 탭의 수정버튼과 충돌 방지 (권한 관리는 btn-save-roles 클래스 존재)
+                if (e.target.classList.contains('btn-save-roles')) return;
+
+                const uid = e.target.getAttribute('data-uid');
+                const email = e.target.getAttribute('data-email');
+                openEditModal(uid, email);
+            });
+        });
+    }
+
+    /* ================== 수정 모달 로직 ================== */
+    const editModalOverlay = document.getElementById('admin-edit-modal-overlay');
+    const editModalUserid = document.getElementById('edit-modal-userid');
+    const editModalEmail = document.getElementById('edit-modal-email');
+    const editModalPwd = document.getElementById('edit-modal-pwd');
+    const editModalAlert = document.getElementById('edit-modal-alert');
+    const btnEditModalCancel = document.getElementById('btn-edit-modal-cancel');
+    const btnEditModalSave = document.getElementById('btn-edit-modal-save');
+    let currentEditingUserId = null;
+
+    function openEditModal(uid, email) {
+        currentEditingUserId = uid;
+        editModalUserid.innerText = uid;
+        editModalEmail.value = email || '';
+        editModalPwd.value = '';
+        editModalAlert.style.display = 'none';
+        
+        // CSS hidden 클래스 제거 및 display 변경
+        editModalOverlay.classList.remove('hidden');
+        editModalOverlay.style.display = 'flex';
+    }
+
+    function closeEditModal() {
+        editModalOverlay.classList.add('hidden');
+        editModalOverlay.style.display = 'none';
+        currentEditingUserId = null;
+    }
+
+    if (btnEditModalCancel) {
+        btnEditModalCancel.addEventListener('click', closeEditModal);
+    }
+
+    if (btnEditModalSave) {
+        btnEditModalSave.addEventListener('click', async () => {
+            const newEmail = editModalEmail.value.trim();
+            const newPwd = editModalPwd.value.trim();
+            const payload = {};
+
+            if (newEmail) payload.email = newEmail;
+            if (newPwd) {
+                if (newPwd.length < 8) {
+                    editModalAlert.innerText = '비밀번호는 8자 이상이어야 합니다.';
+                    editModalAlert.style.display = 'block';
+                    return;
+                }
+                payload.password = newPwd;
+            }
+
+            if (Object.keys(payload).length === 0) {
+                editModalAlert.innerText = '변경할 정보(이메일 또는 비밀번호)를 입력해주세요.';
+                editModalAlert.style.display = 'block';
+                return;
+            }
+
+            editModalAlert.style.display = 'none';
+
+            try {
+                const response = await fetch(`/api/user/${currentEditingUserId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('사용자 정보가 성공적으로 수정되었습니다.');
+                    closeEditModal();
+                    loadUsers();
+                } else {
+                    editModalAlert.innerText = result.message || '수정에 실패했습니다.';
+                    editModalAlert.style.display = 'block';
+                }
+            } catch (err) {
+                editModalAlert.innerText = '서버 통신 중 오류가 발생했습니다.';
+                editModalAlert.style.display = 'block';
+            }
         });
     }
 
