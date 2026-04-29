@@ -33,12 +33,31 @@ public class BoardController {
     // ==========================================
 
     @GetMapping("/posts")
-    public ResponseEntity<Map<String, Object>> getAllPosts() {
+    public ResponseEntity<Map<String, Object>> getPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(required = false) String keyword) {
         Map<String, Object> response = new HashMap<>();
         try {
-            List<Map<String, Object>> posts = boardService.getAllPosts();
+            Map<String, Object> pageData = boardService.getPostsPage(page, size, keyword);
             response.put("success", true);
-            response.put("data", posts);
+            response.put("data", pageData);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/posts/{id}")
+    public ResponseEntity<Map<String, Object>> getPostById(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            // 상세 조회 시 조회수 증가
+            Map<String, Object> postData = boardService.getPostAndIncrementView(id);
+            response.put("success", true);
+            response.put("data", postData);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("success", false);
@@ -48,10 +67,15 @@ public class BoardController {
     }
 
     @PostMapping("/posts")
-    public ResponseEntity<Map<String, Object>> createPost(@RequestBody Map<String, Object> data) {
+    public ResponseEntity<Map<String, Object>> createPost(
+            @RequestHeader("X-User-Id") String requestUserId,
+            @RequestBody Map<String, Object> data) {
         Map<String, Object> response = new HashMap<>();
         try {
-            Map<String, Object> newPost = boardService.createPost(data);
+            boolean admin = isAdmin(requestUserId);
+            // 요청 본문의 userId를 안전하게 덮어씌움 (보안)
+            data.put("userId", requestUserId);
+            Map<String, Object> newPost = boardService.createPost(data, admin);
             response.put("success", true);
             response.put("data", newPost);
             return ResponseEntity.ok(response);

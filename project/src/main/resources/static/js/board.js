@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let posts = [];
+    let currentPage = 0;
+    const pageSize = 15;
+    let currentKeyword = '';
 
     // DOM 요소
     const boardListBody = document.getElementById('board-list-body');
@@ -32,14 +35,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const titleInput = document.getElementById('post-title-input');
     const contentInput = document.getElementById('post-content-input');
     const anonToggle = document.getElementById('anon-toggle');
+    const noticeToggleWrapper = document.getElementById('notice-toggle-wrapper');
+    const noticeToggle = document.getElementById('notice-toggle');
     const saveBtn = document.getElementById('save-post-btn');
     const modalTitle = document.getElementById('modal-title');
+
+    if (isAdmin) {
+        noticeToggleWrapper.style.display = 'flex';
+    }
 
     // 상세 보기 요소
     const detailTitle = document.getElementById('detail-title');
     const detailAuthor = document.getElementById('detail-author');
     const detailDate = document.getElementById('detail-date');
     const detailContent = document.getElementById('detail-content');
+    const detailViews = document.getElementById('detail-views');
     const editBtn = document.getElementById('edit-post-btn');
     const deleteBtn = document.getElementById('delete-post-btn');
 
@@ -69,14 +79,27 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    // 서버에서 게시글 불러오기
-    async function loadPosts() {
+    // 검색 이벤트 바인딩
+    document.getElementById('search-btn').addEventListener('click', () => {
+        currentKeyword = document.getElementById('search-input').value;
+        loadPosts(0);
+    });
+    document.getElementById('search-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            currentKeyword = document.getElementById('search-input').value;
+            loadPosts(0);
+        }
+    });
+
+    // 서버에서 게시글 불러오기 (페이징, 검색 반영)
+    async function loadPosts(page = 0) {
         try {
-            const res = await fetch('/api/posts');
+            const res = await fetch(`/api/posts?page=${page}&size=${pageSize}&keyword=${encodeURIComponent(currentKeyword)}`);
             const result = await res.json();
             if (result.success) {
-                posts = result.data;
-                renderList();
+                posts = result.data.content;
+                currentPage = result.data.currentPage;
+                renderList(result.data.totalPages);
             }
         } catch (e) {
             console.error('게시글 로드 실패', e);
@@ -84,34 +107,73 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 게시글 목록 렌더링
-    function renderList() {
+    function renderList(totalPages) {
         boardListBody.innerHTML = '';
         
         if (posts.length === 0) {
             boardListBody.innerHTML = `
                 <tr>
-                    <td colspan="3" style="text-align:center; color:var(--text-muted); padding:3rem;">등록된 게시글이 없습니다.</td>
+                    <td colspan="4" style="text-align:center; color:var(--text-muted); padding:3rem;">등록된 게시글이 없습니다.</td>
                 </tr>
             `;
+            document.getElementById('pagination').innerHTML = '';
             return;
         }
 
-        // 최신순 정렬
-        const sortedPosts = [...posts].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        sortedPosts.forEach(post => {
+        posts.forEach(post => {
             const tr = document.createElement('tr');
+            if (post.isNotice) {
+                tr.style.backgroundColor = 'rgba(255, 215, 0, 0.05)';
+            }
+            const noticeIcon = post.isNotice ? '<span style="color:var(--accent-color); margin-right:0.5rem; font-size:1.1rem;">📢</span>' : '';
+            
             tr.innerHTML = `
-                <td class="post-title">${post.title}</td>
+                <td class="post-title">${noticeIcon}${post.title}</td>
                 <td>${renderAuthorBadge(post.author, post.isAnon)}</td>
+                <td class="view-count-cell" style="text-align: center; color:var(--text-muted); font-size:0.85rem;">${post.viewCount || 0}</td>
                 <td style="text-align: right; color:var(--text-muted); font-size:0.85rem;">${formatDate(post.date)}</td>
             `;
             
-            // 행 클릭 시 상세보기 모달 열기
-            tr.addEventListener('click', () => openDetailModal(post));
+            // 행 클릭 시 상세보기 모달 열기 (단건 조회 API 호출하여 조회수 1 증가)
+            tr.addEventListener('click', () => {
+                fetch(`/api/posts/${post.id}`)
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            openDetailModal(res.data);
+                            // 리스트 화면의 조회수도 실시간(즉시) 업데이트
+                            tr.querySelector('.view-count-cell').innerText = res.data.viewCount;
+                        }
+                    });
+            });
             
             boardListBody.appendChild(tr);
         });
+
+        renderPagination(totalPages);
+    }
+
+    // 페이지네이션 렌더링
+    function renderPagination(totalPages) {
+        const pagContainer = document.getElementById('pagination');
+        pagContainer.innerHTML = '';
+        
+        for (let i = 0; i < totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'submit-btn';
+            btn.style.padding = '0.4rem 0.8rem';
+            if (i === currentPage) {
+                btn.style.backgroundColor = 'var(--accent-color)';
+                btn.style.color = 'white';
+            } else {
+                btn.style.backgroundColor = 'transparent';
+                btn.style.border = '1px solid var(--border-color)';
+                btn.style.color = 'var(--text-main)';
+            }
+            btn.innerText = i + 1;
+            btn.onclick = () => loadPosts(i);
+            pagContainer.appendChild(btn);
+        }
     }
 
     // 모달 닫기
@@ -139,6 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
         detailAuthor.innerHTML = renderAuthorBadge(post.author, post.isAnon);
         detailDate.innerText = formatDate(post.date);
         detailContent.innerText = post.content;
+        if (detailViews) detailViews.innerText = post.viewCount || 0;
         
         formView.style.display = 'none';
         formFooter.style.display = 'none';
@@ -422,6 +485,9 @@ document.addEventListener('DOMContentLoaded', () => {
         titleInput.value = post.title;
         contentInput.value = post.content;
         anonToggle.checked = post.isAnon;
+        if (isAdmin) {
+            noticeToggle.checked = post.isNotice || false;
+        }
         
         detailView.style.display = 'none';
         detailFooter.style.display = 'none';
@@ -466,6 +532,10 @@ document.addEventListener('DOMContentLoaded', () => {
             isAnon: isAnon,
             userId: loggedInUserId
         };
+        
+        if (isAdmin) {
+            payload.isNotice = noticeToggle.checked;
+        }
 
         try {
             if (currentEditingPostId) {

@@ -32,6 +32,12 @@ public class Post {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "view_count", nullable = false)
+    private Integer viewCount = 0;
+
+    @Column(name = "is_notice", nullable = false)
+    private Boolean isNotice = false;
+
     @PrePersist
     public void prePersist() {
         if (this.createdAt == null) {

@@ -7,6 +7,10 @@ import coinproject.coin.repository.CommentRepository;
 import coinproject.coin.repository.PostRepository;
 import coinproject.coin.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,13 +35,39 @@ public class BoardService {
     // ==========================================
     
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> getAllPosts() {
-        List<Post> posts = postRepository.findAll();
-        return posts.stream().map(this::convertToPostMap).collect(Collectors.toList());
+    public Map<String, Object> getPostsPage(int page, int size, String keyword) {
+        Page<Post> postPage;
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            // Native Query용 정렬 객체 (DB 컬럼명 기준)
+            Pageable nativePageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "is_notice").and(Sort.by(Sort.Direction.DESC, "created_at")));
+            // +검색어* 형태로 간단 변환하여 Boolean 모드 검색 효율 증대
+            String searchKeyword = "+" + keyword.trim().replaceAll("\\s+", " +") + "*";
+            postPage = postRepository.searchByKeywordNative(searchKeyword, nativePageable);
+        } else {
+            // JPQL용 정렬 객체 (엔티티 필드명 기준)
+            Pageable jpqlPageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "isNotice").and(Sort.by(Sort.Direction.DESC, "createdAt")));
+            postPage = postRepository.findAll(jpqlPageable);
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("content", postPage.getContent().stream().map(this::convertToPostMap).collect(Collectors.toList()));
+        result.put("totalPages", postPage.getTotalPages());
+        result.put("totalElements", postPage.getTotalElements());
+        result.put("currentPage", postPage.getNumber());
+        
+        return result;
     }
 
     @Transactional
-    public Map<String, Object> createPost(Map<String, Object> data) {
+    public Map<String, Object> getPostAndIncrementView(Long id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+        post.setViewCount(post.getViewCount() + 1);
+        return convertToPostMap(post);
+    }
+
+    @Transactional
+    public Map<String, Object> createPost(Map<String, Object> data, boolean isAdmin) {
         String userId = (String) data.get("userId");
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -47,6 +77,10 @@ public class BoardService {
         post.setTitle((String) data.get("title"));
         post.setContent((String) data.get("content"));
         post.setIsAnonymous(Boolean.TRUE.equals(data.get("isAnon")));
+        
+        if (isAdmin && data.containsKey("isNotice")) {
+            post.setIsNotice(Boolean.TRUE.equals(data.get("isNotice")));
+        }
 
         postRepository.save(post);
         return convertToPostMap(post);
@@ -66,6 +100,10 @@ public class BoardService {
         post.setContent((String) data.get("content"));
         if (data.containsKey("isAnon")) {
             post.setIsAnonymous(Boolean.TRUE.equals(data.get("isAnon")));
+        }
+        
+        if (isAdmin && data.containsKey("isNotice")) {
+            post.setIsNotice(Boolean.TRUE.equals(data.get("isNotice")));
         }
 
         return convertToPostMap(post);
@@ -162,6 +200,8 @@ public class BoardService {
         map.put("title", post.getTitle());
         map.put("content", post.getContent());
         map.put("isAnon", post.getIsAnonymous());
+        map.put("viewCount", post.getViewCount());
+        map.put("isNotice", post.getIsNotice());
         map.put("date", post.getCreatedAt() != null ? post.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null);
         
         if (post.getUser() != null) {
