@@ -1,30 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 임시 게시글 데이터 초기화 (localStorage 활용)
-    const STORAGE_KEY = 'bitcoin_board_posts';
-    let posts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
-        {
-            id: 1,
-            title: '요즘 비트코인 변동성 장난 아니네요',
-            content: '단타 치기 너무 무섭습니다. 다들 어떻게 대응하고 계신가요?',
-            author: '불기둥사냥꾼',
-            isAnon: false,
-            date: new Date(Date.now() - 86400000).toISOString(),
-            userId: 'user123'
-        },
-        {
-            id: 2,
-            title: '이더리움 차트 분석 공유합니다.',
-            content: '15분봉 기준으로 RSI 바닥 찍었습니다. 곧 기술적 반등 올 것 같네요.',
-            author: '익명',
-            isAnon: true,
-            date: new Date(Date.now() - 3600000).toISOString(),
-            userId: 'user456'
-        }
-    ];
+    // 공통: 현재 로그인된 아이디 확인
+    const loggedInUserId = sessionStorage.getItem('loggedInUserId');
+    if (!loggedInUserId) {
+        alert("로그인이 필요합니다.");
+        window.location.href = "index.html";
+        return;
+    }
 
-    // 현재 사용자 (테스트용 하드코딩)
-    // 실제 환경에서는 app.js의 currentUser 세션을 사용해야 함
-    const currentUser = JSON.parse(sessionStorage.getItem('currentUser')) || { id: 'testUser', name: '테스터' };
+    // 관리자 여부 확인
+    const rolesStr = sessionStorage.getItem('loggedInUserRoles');
+    let isAdmin = false;
+    if (rolesStr) {
+        try { isAdmin = JSON.parse(rolesStr).includes('ADMIN'); } catch(e) {}
+    }
+
+    let posts = [];
 
     // DOM 요소
     const boardListBody = document.getElementById('board-list-body');
@@ -55,13 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentEditingPostId = null;
 
-    // 데이터 저장 유틸
-    function savePosts() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-    }
-
     // 날짜 포맷팅 유틸
     function formatDate(dateString) {
+        if (!dateString) return '';
         const date = new Date(dateString);
         const yyyy = date.getFullYear();
         const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -73,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 작성자 뱃지 렌더링 유틸
     function renderAuthorBadge(author, isAnon) {
-        const initial = isAnon ? '?' : author.charAt(0).toUpperCase();
+        const initial = isAnon ? '?' : (author ? author.charAt(0).toUpperCase() : '?');
         const badgeClass = isAnon ? 'author-badge anon' : 'author-badge';
         return `
             <div class="post-author">
@@ -81,6 +67,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>${author}</span>
             </div>
         `;
+    }
+
+    // 서버에서 게시글 불러오기
+    async function loadPosts() {
+        try {
+            const res = await fetch('/api/posts');
+            const result = await res.json();
+            if (result.success) {
+                posts = result.data;
+                renderList();
+            }
+        } catch (e) {
+            console.error('게시글 로드 실패', e);
+        }
     }
 
     // 게시글 목록 렌더링
@@ -118,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeModal() {
         modalOverlay.classList.remove('active');
         setTimeout(() => {
-            // 초기화
             titleInput.value = '';
             contentInput.value = '';
             anonToggle.checked = false;
@@ -146,18 +145,25 @@ document.addEventListener('DOMContentLoaded', () => {
         detailView.style.display = 'flex';
         
         // 본인이 작성한 글인지 확인하여 수정/삭제 버튼 노출
-        if (post.userId === currentUser.id) {
+        // 관리자인 경우 삭제 버튼 항상 노출
+        if (post.userId === loggedInUserId || isAdmin) {
             detailFooter.style.display = 'flex';
             
-            // 수정/삭제 버튼에 현재 글 ID 바인딩
-            editBtn.onclick = () => openEditModal(post);
+            // 수정은 본인에게만 허용 (선택적)
+            if (post.userId === loggedInUserId) {
+                editBtn.style.display = 'block';
+                editBtn.onclick = () => openEditModal(post);
+            } else {
+                editBtn.style.display = 'none';
+            }
+            
             deleteBtn.onclick = () => deletePost(post.id);
         } else {
             detailFooter.style.display = 'none';
         }
         
         // 댓글 렌더링
-        renderComments(post.id);
+        loadComments(post.id);
         
         // 새 댓글 등록 이벤트 바인딩
         const saveCommentBtn = document.getElementById('save-comment-btn');
@@ -167,40 +173,72 @@ document.addEventListener('DOMContentLoaded', () => {
         const newSaveCommentBtn = saveCommentBtn.cloneNode(true);
         saveCommentBtn.parentNode.replaceChild(newSaveCommentBtn, saveCommentBtn);
         
-        newSaveCommentBtn.addEventListener('click', () => {
+        newSaveCommentBtn.addEventListener('click', async () => {
             const content = commentInput.value.trim();
             if (!content) return alert('댓글 내용을 입력해주세요.');
             
-            const newComment = {
-                id: Date.now(),
-                postId: post.id,
-                parentId: null, // 최상위 댓글
-                content: content,
-                author: currentUser.name,
-                isAnon: false, // 기본은 실명 (필요 시 토글 추가 가능)
-                date: new Date().toISOString(),
-                userId: currentUser.id
-            };
-            
-            let allComments = JSON.parse(localStorage.getItem('bitcoin_board_comments')) || [];
-            allComments.push(newComment);
-            localStorage.setItem('bitcoin_board_comments', JSON.stringify(allComments));
-            
-            commentInput.value = '';
-            renderComments(post.id);
+            try {
+                const res = await fetch('/api/comments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        postId: post.id,
+                        content: content,
+                        isAnon: false,
+                        userId: loggedInUserId
+                    })
+                });
+                if (res.ok) {
+                    commentInput.value = '';
+                    loadComments(post.id);
+                } else {
+                    alert('댓글 등록에 실패했습니다.');
+                }
+            } catch (e) {
+                alert('서버 오류 발생');
+            }
         });
 
         modalOverlay.classList.add('active');
     }
 
+    // 서버에서 댓글 불러오기
+    async function loadComments(postId) {
+        try {
+            const res = await fetch(`/api/comments?postId=${postId}`);
+            const result = await res.json();
+            if (result.success) {
+                renderComments(postId, result.data);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // 전역 댓글 삭제 함수 (HTML onclick에서 호출됨)
+    window.deleteComment = async function(commentId, postId) {
+        if (!confirm('이 댓글을 정말 삭제하시겠습니까?')) return;
+        try {
+            const res = await fetch(`/api/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: { 'X-User-Id': loggedInUserId }
+            });
+            if (res.ok) {
+                loadComments(postId);
+            } else {
+                const data = await res.json();
+                alert(data.message || '삭제에 실패했습니다.');
+            }
+        } catch (e) {
+            alert('서버 오류가 발생했습니다.');
+        }
+    }
+
     // 댓글 렌더링 함수
-    function renderComments(postId) {
+    function renderComments(postId, postComments) {
         const commentsList = document.getElementById('comments-list');
         const commentCount = document.getElementById('comment-count');
         commentsList.innerHTML = '';
-        
-        let allComments = JSON.parse(localStorage.getItem('bitcoin_board_comments')) || [];
-        const postComments = allComments.filter(c => c.postId === postId);
         
         commentCount.innerText = postComments.length;
         
@@ -214,12 +252,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const replies = postComments.filter(c => c.parentId);
 
         topComments.forEach(comment => {
+            const canDelete = comment.userId === loggedInUserId || isAdmin;
+            const delBtnHTML = canDelete ? `<button onclick="deleteComment(${comment.id}, ${postId})" style="background:none; border:none; color:var(--error-color); cursor:pointer; padding:0; font-size:0.8rem; margin-left:10px;">삭제</button>` : '';
+
             // 부모 댓글 렌더링
             const commentDiv = document.createElement('div');
             commentDiv.className = 'comment-item';
             commentDiv.innerHTML = `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                    ${renderAuthorBadge(comment.author, comment.isAnon)}
+                    <div style="display: flex; align-items: center;">
+                        ${renderAuthorBadge(comment.author, comment.isAnon)}
+                        ${delBtnHTML}
+                    </div>
                     <div class="post-meta">${formatDate(comment.date)}</div>
                 </div>
                 <div style="color: var(--text-main); font-size: 0.95rem; line-height: 1.5; margin-bottom: 0.5rem;">
@@ -240,13 +284,19 @@ document.addEventListener('DOMContentLoaded', () => {
             // 해당 부모의 대댓글 렌더링
             const childReplies = replies.filter(r => r.parentId === comment.id);
             childReplies.forEach(reply => {
+                const canDelReply = reply.userId === loggedInUserId || isAdmin;
+                const delReplyBtnHTML = canDelReply ? `<button onclick="deleteComment(${reply.id}, ${postId})" style="background:none; border:none; color:var(--error-color); cursor:pointer; padding:0; font-size:0.8rem; margin-left:10px;">삭제</button>` : '';
+
                 const replyDiv = document.createElement('div');
                 replyDiv.className = 'comment-item reply';
                 replyDiv.style.cssText = 'margin-left: 2.5rem; padding-left: 1rem; border-left: 2px solid rgba(255,255,255,0.1); position: relative; margin-top: 1rem;';
                 replyDiv.innerHTML = `
                     <div style="position: absolute; left: -1.8rem; top: 0.2rem; color: var(--text-muted);">└</div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                        ${renderAuthorBadge(reply.author, reply.isAnon)}
+                        <div style="display: flex; align-items: center;">
+                            ${renderAuthorBadge(reply.author, reply.isAnon)}
+                            ${delReplyBtnHTML}
+                        </div>
                         <div class="post-meta">${formatDate(reply.date)}</div>
                     </div>
                     <div style="color: var(--text-main); font-size: 0.95rem; line-height: 1.5; margin-bottom: 0.5rem;">
@@ -271,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 대댓글 등록 이벤트
         document.querySelectorAll('.save-reply-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const parentId = parseInt(e.target.getAttribute('data-parent-id'));
                 const container = document.getElementById(`reply-form-${parentId}`);
                 const input = container.querySelector('.reply-input');
@@ -279,22 +329,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (!content) return alert('답글 내용을 입력해주세요.');
                 
-                const newReply = {
-                    id: Date.now(),
-                    postId: postId,
-                    parentId: parentId,
-                    content: content,
-                    author: currentUser.name,
-                    isAnon: false,
-                    date: new Date().toISOString(),
-                    userId: currentUser.id
-                };
-                
-                let allComments = JSON.parse(localStorage.getItem('bitcoin_board_comments')) || [];
-                allComments.push(newReply);
-                localStorage.setItem('bitcoin_board_comments', JSON.stringify(allComments));
-                
-                renderComments(postId);
+                try {
+                    const res = await fetch('/api/comments', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            postId: postId,
+                            parentId: parentId,
+                            content: content,
+                            isAnon: false,
+                            userId: loggedInUserId
+                        })
+                    });
+                    if (res.ok) {
+                        loadComments(postId);
+                    } else {
+                        alert('대댓글 등록에 실패했습니다.');
+                    }
+                } catch (err) {
+                    alert('서버 오류 발생');
+                }
             });
         });
     }
@@ -327,17 +381,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 글 삭제
-    function deletePost(id) {
-        if(confirm('정말 이 게시글을 삭제하시겠습니까?')) {
-            posts = posts.filter(p => p.id !== id);
-            savePosts();
-            renderList();
-            closeModal();
+    async function deletePost(id) {
+        if(confirm('정말 이 게시글을 삭제하시겠습니까? 관련 댓글도 모두 삭제됩니다.')) {
+            try {
+                const res = await fetch(`/api/posts/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'X-User-Id': loggedInUserId }
+                });
+                if (res.ok) {
+                    alert('게시글이 삭제되었습니다.');
+                    closeModal();
+                    loadPosts();
+                } else {
+                    const data = await res.json();
+                    alert(data.message || '삭제에 실패했습니다.');
+                }
+            } catch (e) {
+                alert('서버 오류가 발생했습니다.');
+            }
         }
     }
 
     // 글 저장 (신규 작성 및 수정)
-    saveBtn.addEventListener('click', () => {
+    saveBtn.addEventListener('click', async () => {
         const title = titleInput.value.trim();
         const content = contentInput.value.trim();
         const isAnon = anonToggle.checked;
@@ -345,34 +411,37 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!title) return alert('제목을 입력해주세요.');
         if (!content) return alert('내용을 입력해주세요.');
 
-        const authorName = isAnon ? '익명' : currentUser.name;
+        const payload = {
+            title: title,
+            content: content,
+            isAnon: isAnon,
+            userId: loggedInUserId
+        };
 
-        if (currentEditingPostId) {
-            // 수정 모드
-            const postIndex = posts.findIndex(p => p.id === currentEditingPostId);
-            if(postIndex > -1) {
-                posts[postIndex].title = title;
-                posts[postIndex].content = content;
-                posts[postIndex].isAnon = isAnon;
-                posts[postIndex].author = authorName;
+        try {
+            if (currentEditingPostId) {
+                // 수정 모드
+                const res = await fetch(`/api/posts/${currentEditingPostId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-User-Id': loggedInUserId },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error('수정 실패');
+            } else {
+                // 신규 작성
+                const res = await fetch('/api/posts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error('생성 실패');
             }
-        } else {
-            // 신규 작성
-            const newPost = {
-                id: Date.now(),
-                title,
-                content,
-                isAnon,
-                author: authorName,
-                date: new Date().toISOString(),
-                userId: currentUser.id
-            };
-            posts.push(newPost);
-        }
 
-        savePosts();
-        renderList();
-        closeModal();
+            closeModal();
+            loadPosts(); // 목록 리로드
+        } catch (error) {
+            alert('저장 중 오류가 발생했습니다.');
+        }
     });
 
     // 이벤트 리스너 바인딩
@@ -382,5 +451,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 초기 렌더링
-    renderList();
+    loadPosts();
 });
