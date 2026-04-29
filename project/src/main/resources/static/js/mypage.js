@@ -195,4 +195,138 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    /* ==========================================================================
+       [3] 나의 커뮤니티 활동 (내가 쓴 글/댓글)
+       ========================================================================== */
+    const tabMyPosts = document.getElementById('tab-my-posts');
+    const tabMyComments = document.getElementById('tab-my-comments');
+    const myActivityList = document.getElementById('my-activity-list');
+    const activityPagination = document.getElementById('activity-pagination');
+
+    let currentActivityType = 'posts'; // 'posts' or 'comments'
+    let currentActivityPage = 0;
+
+    if (tabMyPosts && tabMyComments) {
+        tabMyPosts.addEventListener('click', () => {
+            currentActivityType = 'posts';
+            currentActivityPage = 0;
+            updateTabStyles();
+            loadMyActivities();
+        });
+
+        tabMyComments.addEventListener('click', () => {
+            currentActivityType = 'comments';
+            currentActivityPage = 0;
+            updateTabStyles();
+            loadMyActivities();
+        });
+
+        // 초기 로드
+        loadMyActivities();
+    }
+
+    function updateTabStyles() {
+        if (currentActivityType === 'posts') {
+            tabMyPosts.style.color = 'var(--accent-color)';
+            tabMyPosts.style.borderBottom = '2px solid var(--accent-color)';
+            tabMyComments.style.color = 'var(--text-muted)';
+            tabMyComments.style.borderBottom = '2px solid transparent';
+        } else {
+            tabMyComments.style.color = 'var(--accent-color)';
+            tabMyComments.style.borderBottom = '2px solid var(--accent-color)';
+            tabMyPosts.style.color = 'var(--text-muted)';
+            tabMyPosts.style.borderBottom = '2px solid transparent';
+        }
+    }
+
+    async function loadMyActivities() {
+        myActivityList.innerHTML = `<div style="text-align:center; padding: 2rem; color:var(--text-muted); font-size:0.9rem;">데이터를 불러오는 중입니다...</div>`;
+        activityPagination.innerHTML = '';
+
+        const endpoint = currentActivityType === 'posts' ? `/api/user/${loggedInUserId}/posts` : `/api/user/${loggedInUserId}/comments`;
+        
+        try {
+            const res = await fetch(`${endpoint}?page=${currentActivityPage}&size=5`);
+            const result = await res.json();
+            
+            if (result.success) {
+                renderActivityList(result.data.content);
+                renderActivityPagination(result.data.totalPages);
+            } else {
+                myActivityList.innerHTML = `<div style="text-align:center; padding: 2rem; color:var(--error-color); font-size:0.9rem;">${result.message || '데이터 로드 실패'}</div>`;
+            }
+        } catch (e) {
+            myActivityList.innerHTML = `<div style="text-align:center; padding: 2rem; color:var(--error-color); font-size:0.9rem;">서버 통신 에러 발생</div>`;
+        }
+    }
+
+    function renderActivityList(items) {
+        myActivityList.innerHTML = '';
+        if (!items || items.length === 0) {
+            myActivityList.innerHTML = `<div style="text-align:center; padding: 2rem; color:var(--text-muted); font-size:0.9rem;">작성한 ${currentActivityType === 'posts' ? '게시글이' : '댓글이'} 없습니다.</div>`;
+            return;
+        }
+
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.style.padding = '0.8rem';
+            div.style.borderBottom = '1px solid var(--border-color)';
+            div.style.cursor = 'pointer';
+            
+            // 호버 효과
+            div.addEventListener('mouseenter', () => div.style.backgroundColor = 'rgba(0,0,0,0.02)');
+            div.addEventListener('mouseleave', () => div.style.backgroundColor = 'transparent');
+            
+            // 클릭 시 게시판으로 이동
+            div.addEventListener('click', () => {
+                window.location.href = `board.html`;
+                // 실제로는 id를 넘겨서 해당 글을 띄워주는 로직이 필요할 수 있습니다.
+            });
+
+            const titleText = currentActivityType === 'posts' ? item.title : item.content;
+            const dateStr = item.date ? item.date.substring(0,16).replace('T', ' ') : '';
+            
+            div.innerHTML = `
+                <div style="color:var(--text-main); font-weight:500; font-size:0.95rem; margin-bottom:0.3rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    ${titleText}
+                </div>
+                <div style="color:var(--text-muted); font-size:0.8rem; display:flex; justify-content:space-between;">
+                    <span>${dateStr}</span>
+                    ${currentActivityType === 'posts' ? `<span>👁️ ${item.viewCount || 0}</span>` : ''}
+                </div>
+            `;
+            myActivityList.appendChild(div);
+        });
+    }
+
+    function renderActivityPagination(totalPages) {
+        activityPagination.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        for (let i = 0; i < totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.innerText = i + 1;
+            btn.style.padding = '0.2rem 0.5rem';
+            btn.style.fontSize = '0.85rem';
+            btn.style.border = '1px solid var(--border-color)';
+            btn.style.borderRadius = '4px';
+            btn.style.cursor = 'pointer';
+            
+            if (i === currentActivityPage) {
+                btn.style.backgroundColor = 'var(--accent-color)';
+                btn.style.color = '#fff';
+                btn.style.borderColor = 'var(--accent-color)';
+            } else {
+                btn.style.backgroundColor = 'transparent';
+                btn.style.color = 'var(--text-main)';
+            }
+
+            btn.addEventListener('click', () => {
+                currentActivityPage = i;
+                loadMyActivities();
+            });
+            activityPagination.appendChild(btn);
+        }
+    }
+
 });

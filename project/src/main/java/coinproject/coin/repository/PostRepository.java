@@ -15,4 +15,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query(value = SEARCH_QUERY, countQuery = COUNT_QUERY, nativeQuery = true)
     Page<Post> searchByKeywordNative(@Param("keyword") String keyword, Pageable pageable);
+
+    // 마이페이지: 내가 쓴 글 조회
+    Page<Post> findByUser_UserIdOrderByCreatedAtDesc(String userId, Pageable pageable);
 }

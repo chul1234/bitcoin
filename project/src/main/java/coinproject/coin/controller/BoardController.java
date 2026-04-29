@@ -189,4 +189,44 @@ public class BoardController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+
+    // ==========================================
+    // 3. 마이페이지 (내 글/내 댓글) API
+    // ==========================================
+
+    @GetMapping("/user/{userId}/posts")
+    public ResponseEntity<Map<String, Object>> getMyPosts(
+            @PathVariable String userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Map<String, Object> pageData = boardService.getMyPostsPage(userId, page, size);
+            response.put("success", true);
+            response.put("data", pageData);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/user/{userId}/comments")
+    public ResponseEntity<Map<String, Object>> getMyComments(
+            @PathVariable String userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Map<String, Object> pageData = boardService.getMyCommentsPage(userId, page, size);
+            response.put("success", true);
+            response.put("data", pageData);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
 }

@@ -102,6 +102,20 @@
                             </div>
                         </div>
 
+                        <!-- 디스플레이 설정 (테마) -->
+                        <div class="info-card" style="box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                            <h3 style="margin-bottom: 1.5rem; color: var(--text-main); font-size: 1.15rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem; display:flex; align-items:center; gap:0.5rem;">
+                                <span>🎨</span> 디스플레이 설정
+                            </h3>
+                            <div class="info-row" style="border-bottom: none;">
+                                <div class="info-row-display">
+                                    <span class="info-label">화면 테마</span>
+                                    <span class="info-value" style="color:var(--text-muted);">다크/라이트 모드 전환</span>
+                                    <button id="theme-toggle-btn" class="btn-inline-edit" style="font-size:1.2rem; padding: 0.2rem 0.5rem; background:transparent; border:1px solid var(--border-color);"><span id="theme-icon">🌞</span></button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- 위험 구역 (회원 탈퇴) -->
                         <div class="danger-zone" style="background: rgba(239, 68, 68, 0.03); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 12px; padding: 1.5rem; transition: all 0.2s ease;">
                             <h3 style="color: #EF4444; margin-bottom: 0.5rem; font-size: 1.05rem; display:flex; align-items:center; gap:0.5rem;">
@@ -114,6 +128,28 @@
 
                     <!-- 오른쪽 열: 자산, API, 보안 정보 -->
                     <div class="mypage-right-col" style="display: flex; flex-direction: column; gap: 2rem;">
+                        
+                        <!-- 나의 커뮤니티 활동 -->
+                        <div class="info-card" style="box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                            <h3 style="margin-bottom: 1.2rem; color: var(--text-main); font-size: 1.15rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem; display:flex; align-items:center; gap:0.5rem;">
+                                <span>📝</span> 나의 커뮤니티 활동
+                            </h3>
+                            
+                            <!-- 탭 메뉴 -->
+                            <div style="display: flex; gap: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem;">
+                                <button id="tab-my-posts" style="background:none; border:none; color:var(--accent-color); font-weight:600; padding:0.5rem 1rem; border-bottom: 2px solid var(--accent-color); cursor:pointer;">내가 쓴 글</button>
+                                <button id="tab-my-comments" style="background:none; border:none; color:var(--text-muted); font-weight:500; padding:0.5rem 1rem; border-bottom: 2px solid transparent; cursor:pointer;">내가 쓴 댓글</button>
+                            </div>
+                            
+                            <!-- 리스트 영역 -->
+                            <div id="my-activity-list" style="display:flex; flex-direction:column; gap:0.5rem; min-height: 150px; max-height: 250px; overflow-y: auto;">
+                                <div style="text-align:center; padding: 2rem; color:var(--text-muted); font-size:0.9rem;">데이터를 불러오는 중입니다...</div>
+                            </div>
+                            
+                            <!-- 활동 영역 페이지네이션 -->
+                            <div id="activity-pagination" style="display: flex; justify-content: center; gap: 0.3rem; margin-top: 1rem;">
+                            </div>
+                        </div>
                         
                         <!-- 1. 총 자산 요약 (모의 데이터) -->
                         <div class="info-card" style="background: linear-gradient(135deg, rgba(38, 166, 154, 0.1) 0%, rgba(30, 41, 59, 0.6) 100%); border: 1px solid rgba(38, 166, 154, 0.2); position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">

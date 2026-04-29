@@ -15,6 +15,16 @@
     --accent-color: #4F46E5;    /* 차분한 인디고 (포인트 컬러) */
     --accent-hover: #4338CA;
     --error-color: #EF4444;     /* 에러 알림 색상 */
+    --border-color: rgba(255, 255, 255, 0.1); /* 기본 다크 보더 */
+}
+
+/* 라이트 모드 팔레트 */
+[data-theme="light"] {
+    --bg-color: #F8FAFC;        /* 밝은 슬레이트 바탕 */
+    --card-bg: #FFFFFF;         /* 카드 배경 (흰색) */
+    --text-main: #0F172A;       /* 기본 텍스트 (다크 슬레이트) */
+    --text-muted: #64748B;      /* 보조 텍스트 */
+    --border-color: rgba(0, 0, 0, 0.1); /* 라이트 보더 */
 }
 
 body {

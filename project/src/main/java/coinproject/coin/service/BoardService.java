@@ -191,6 +191,44 @@ public class BoardService {
     }
 
     // ==========================================
+    // MyPage Features
+    // ==========================================
+    
+    @Transactional(readOnly = true)
+    public Map<String, Object> getMyPostsPage(String userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Post> postPage = postRepository.findByUser_UserIdOrderByCreatedAtDesc(userId, pageable);
+        
+        List<Map<String, Object>> content = postPage.getContent().stream()
+                .map(this::convertToPostMap)
+                .collect(Collectors.toList());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("content", content);
+        result.put("currentPage", postPage.getNumber());
+        result.put("totalElements", postPage.getTotalElements());
+        result.put("totalPages", postPage.getTotalPages());
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getMyCommentsPage(String userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Comment> commentPage = commentRepository.findByUser_UserIdOrderByCreatedAtDesc(userId, pageable);
+        
+        List<Map<String, Object>> content = commentPage.getContent().stream()
+                .map(this::convertToCommentMap)
+                .collect(Collectors.toList());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("content", content);
+        result.put("currentPage", commentPage.getNumber());
+        result.put("totalElements", commentPage.getTotalElements());
+        result.put("totalPages", commentPage.getTotalPages());
+        return result;
+    }
+
+    // ==========================================
     // Helper Methods
     // ==========================================
 
