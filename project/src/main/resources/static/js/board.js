@@ -183,6 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
             titleInput.value = '';
             contentInput.value = '';
             anonToggle.checked = false;
+            if (noticeToggle) noticeToggle.checked = false;
             currentEditingPostId = null;
             
             formView.style.display = 'flex';
@@ -550,7 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 신규 작성
                 const res = await fetch('/api/posts', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-User-Id': loggedInUserId },
                     body: JSON.stringify(payload)
                 });
                 if (!res.ok) throw new Error('생성 실패');
