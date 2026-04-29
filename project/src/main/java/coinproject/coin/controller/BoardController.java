@@ -131,6 +131,24 @@ public class BoardController {
         }
     }
 
+    @PutMapping("/comments/{id}")
+    public ResponseEntity<Map<String, Object>> updateComment(@PathVariable Long id, 
+                                                             @RequestHeader("X-User-Id") String requestUserId,
+                                                             @RequestBody Map<String, Object> data) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            boolean admin = isAdmin(requestUserId);
+            Map<String, Object> updatedComment = boardService.updateComment(id, data, requestUserId, admin);
+            response.put("success", true);
+            response.put("data", updatedComment);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
     @DeleteMapping("/comments/{id}")
     public ResponseEntity<Map<String, Object>> deleteComment(@PathVariable Long id, 
                                                              @RequestHeader("X-User-Id") String requestUserId) {

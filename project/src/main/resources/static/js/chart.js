@@ -782,10 +782,5 @@ document.addEventListener('DOMContentLoaded', () => {
         priceInterval = setInterval(fetchLivePrice, 1000);
     };
 
-    // 로그아웃 버튼 이벤트 (로그인 페이지로 돌아가기)
-    document.getElementById('logout-btn').addEventListener('click', () => {
-        if(priceInterval) clearInterval(priceInterval);
-        // 로그인 페이지로 이동
-        window.location.href = '/index.html';
-    });
+
 });

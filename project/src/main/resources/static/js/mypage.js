@@ -194,12 +194,5 @@ document.addEventListener('DOMContentLoaded', () => {
         element.style.color = 'var(--error-color)';
     }
 
-    // 로그아웃 공통 기능
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            sessionStorage.clear();
-            window.location.href = 'index.html';
-        });
-    }
+
 });

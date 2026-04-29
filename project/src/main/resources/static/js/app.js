@@ -11,20 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const signupScreen = document.getElementById('signup-screen');
     const introScreen = document.getElementById('intro-screen');
 
-    // 공통: 관리자가 아니면 사이드바 관리 탭 숨기기
-    const adminNavItems = document.querySelectorAll('.nav-item[title="관리"]');
-    if (adminNavItems.length > 0) {
-        const rolesStr = sessionStorage.getItem('loggedInUserRoles');
-        let isAdmin = false;
-        if (rolesStr) {
-            try {
-                isAdmin = JSON.parse(rolesStr).includes('ADMIN');
-            } catch(e) {}
-        }
-        if (!isAdmin) {
-            adminNavItems.forEach(item => item.style.display = 'none');
-        }
-    }
 
     // Navigation toggles
     document.getElementById('to-signup').addEventListener('click', (e) => {

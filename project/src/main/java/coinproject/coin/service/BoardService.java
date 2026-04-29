@@ -139,6 +139,19 @@ public class BoardService {
         commentRepository.delete(comment);
     }
 
+    @Transactional
+    public Map<String, Object> updateComment(Long id, Map<String, Object> data, String requestUserId, boolean isAdmin) {
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+
+        if (!isAdmin && (comment.getUser() == null || !comment.getUser().getUserId().equals(requestUserId))) {
+            throw new IllegalArgumentException("수정 권한이 없습니다.");
+        }
+
+        comment.setContent((String) data.get("content"));
+        return convertToCommentMap(comment);
+    }
+
     // ==========================================
     // Helper Methods
     // ==========================================

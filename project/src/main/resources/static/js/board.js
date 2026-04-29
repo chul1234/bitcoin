@@ -234,7 +234,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 댓글 렌더링 함수
+    // 전역 댓글 수정 폼 토글 함수
+    window.toggleEditComment = function(commentId) {
+        const viewDiv = document.getElementById(`comment-view-${commentId}`);
+        const editForm = document.getElementById(`comment-edit-form-${commentId}`);
+        
+        if (editForm.style.display === 'none') {
+            viewDiv.style.display = 'none';
+            editForm.style.display = 'flex';
+        } else {
+            viewDiv.style.display = 'block';
+            editForm.style.display = 'none';
+        }
+    }
+
+    // 전역 댓글 수정 저장 함수
+    window.saveEditComment = async function(commentId, postId) {
+        const input = document.getElementById(`comment-edit-input-${commentId}`);
+        const content = input.value.trim();
+        
+        if (!content) return alert('수정할 내용을 입력해주세요.');
+        
+        try {
+            const res = await fetch(`/api/comments/${commentId}`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-User-Id': loggedInUserId 
+                },
+                body: JSON.stringify({ content: content })
+            });
+            if (res.ok) {
+                loadComments(postId);
+            } else {
+                const data = await res.json();
+                alert(data.message || '수정에 실패했습니다.');
+            }
+        } catch (e) {
+            alert('서버 오류가 발생했습니다.');
+        }
+    }
+
+    // 댓글 렌더링 함수 (무한 대댓글 지원)
     function renderComments(postId, postComments) {
         const commentsList = document.getElementById('comments-list');
         const commentCount = document.getElementById('comment-count');
@@ -247,28 +288,52 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // 최상위 댓글과 대댓글 분리
         const topComments = postComments.filter(c => !c.parentId);
-        const replies = postComments.filter(c => c.parentId);
 
-        topComments.forEach(comment => {
+        function buildCommentHTML(comment, level) {
+            const canEdit = comment.userId === loggedInUserId;
             const canDelete = comment.userId === loggedInUserId || isAdmin;
+            
+            const editBtnHTML = canEdit ? `<button onclick="toggleEditComment(${comment.id})" style="background:none; border:none; color:var(--accent-color); cursor:pointer; padding:0; font-size:0.8rem; margin-left:10px;">수정</button>` : '';
             const delBtnHTML = canDelete ? `<button onclick="deleteComment(${comment.id}, ${postId})" style="background:none; border:none; color:var(--error-color); cursor:pointer; padding:0; font-size:0.8rem; margin-left:10px;">삭제</button>` : '';
 
-            // 부모 댓글 렌더링
-            const commentDiv = document.createElement('div');
-            commentDiv.className = 'comment-item';
-            commentDiv.innerHTML = `
+            // 깊이가 깊어질수록 왼쪽 여백 추가 (최대 5단계까지만 시각적 들여쓰기 제한)
+            const visualLevel = level > 5 ? 5 : level;
+            const marginStr = visualLevel > 0 ? `margin-left: ${visualLevel * 2.5}rem; padding-left: 1rem; border-left: 2px solid rgba(255,255,255,0.1); position: relative; margin-top: 1rem;` : '';
+            const indentIcon = visualLevel > 0 ? `<div style="position: absolute; left: -1.8rem; top: 0.2rem; color: var(--text-muted);">└</div>` : '';
+
+            const div = document.createElement('div');
+            div.className = level > 0 ? 'comment-item reply' : 'comment-item';
+            if (marginStr) div.style.cssText = marginStr;
+
+            // HTML 이스케이프 처리 (입력 폼 value 용)
+            const safeContent = comment.content.replace(/"/g, '&quot;');
+
+            div.innerHTML = `
+                ${indentIcon}
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                     <div style="display: flex; align-items: center;">
                         ${renderAuthorBadge(comment.author, comment.isAnon)}
+                        ${editBtnHTML}
                         ${delBtnHTML}
                     </div>
                     <div class="post-meta">${formatDate(comment.date)}</div>
                 </div>
-                <div style="color: var(--text-main); font-size: 0.95rem; line-height: 1.5; margin-bottom: 0.5rem;">
+                
+                <!-- 내용 보기 모드 -->
+                <div id="comment-view-${comment.id}" style="color: var(--text-main); font-size: 0.95rem; line-height: 1.5; margin-bottom: 0.5rem;">
                     ${comment.content}
                 </div>
+                
+                <!-- 내용 수정 폼 (초기 숨김) -->
+                <div id="comment-edit-form-${comment.id}" style="display:none; flex-direction:column; gap:0.5rem; margin-bottom: 0.5rem;">
+                    <input type="text" id="comment-edit-input-${comment.id}" class="form-input" style="padding: 0.6rem; font-size: 0.9rem;" value="${safeContent}">
+                    <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                        <button onclick="toggleEditComment(${comment.id})" style="background:transparent; border:1px solid var(--border-color); color:var(--text-main); padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">취소</button>
+                        <button onclick="saveEditComment(${comment.id}, ${postId})" style="background:var(--accent-color); border:none; color:white; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">저장</button>
+                    </div>
+                </div>
+
                 <div style="font-size: 0.85rem; margin-bottom: 0.5rem;">
                     <button class="reply-btn" data-id="${comment.id}" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; font-weight:500;">답글 달기</button>
                 </div>
@@ -277,34 +342,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="submit-btn save-reply-btn" data-parent-id="${comment.id}" style="padding: 0.6rem 1rem; font-size: 0.85rem;">등록</button>
                 </div>
             `;
-            // 초기엔 숨김
-            commentDiv.querySelector('.reply-form-container').style.display = 'none';
-            commentsList.appendChild(commentDiv);
+            // 초기엔 폼 숨김 (HTML 문자열로 넣었기 때문에 별도 처리 불필요)
+            commentsList.appendChild(div);
 
-            // 해당 부모의 대댓글 렌더링
-            const childReplies = replies.filter(r => r.parentId === comment.id);
-            childReplies.forEach(reply => {
-                const canDelReply = reply.userId === loggedInUserId || isAdmin;
-                const delReplyBtnHTML = canDelReply ? `<button onclick="deleteComment(${reply.id}, ${postId})" style="background:none; border:none; color:var(--error-color); cursor:pointer; padding:0; font-size:0.8rem; margin-left:10px;">삭제</button>` : '';
-
-                const replyDiv = document.createElement('div');
-                replyDiv.className = 'comment-item reply';
-                replyDiv.style.cssText = 'margin-left: 2.5rem; padding-left: 1rem; border-left: 2px solid rgba(255,255,255,0.1); position: relative; margin-top: 1rem;';
-                replyDiv.innerHTML = `
-                    <div style="position: absolute; left: -1.8rem; top: 0.2rem; color: var(--text-muted);">└</div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <div style="display: flex; align-items: center;">
-                            ${renderAuthorBadge(reply.author, reply.isAnon)}
-                            ${delReplyBtnHTML}
-                        </div>
-                        <div class="post-meta">${formatDate(reply.date)}</div>
-                    </div>
-                    <div style="color: var(--text-main); font-size: 0.95rem; line-height: 1.5; margin-bottom: 0.5rem;">
-                        ${reply.content}
-                    </div>
-                `;
-                commentsList.appendChild(replyDiv);
+            // 해당 댓글의 자식(대댓글) 찾아서 재귀 호출
+            const children = postComments.filter(c => c.parentId === comment.id);
+            children.forEach(child => {
+                buildCommentHTML(child, level + 1);
             });
+        }
+
+        topComments.forEach(comment => {
+            buildCommentHTML(comment, 0);
         });
 
         // 답글 달기 버튼 이벤트
