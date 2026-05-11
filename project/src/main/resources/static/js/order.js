@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // -----------------------------------------------------
     let currentMarket = 'KRW-BTC'; // 기본 코인
     let ws = null;
+    let isPriceInitialized = false; // 최초 1회 현재가 자동 기입 플래그
 
     function connectOrderbookWS() {
         if (ws) {
@@ -74,7 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ws.onopen = () => {
             const msg = [
                 { ticket: "cd_orderbook" },
-                { type: "orderbook", codes: [currentMarket] }
+                { type: "orderbook", codes: [currentMarket] },
+                { type: "ticker", codes: [currentMarket] } // 현재가 정보 추가 구독
             ];
             ws.send(JSON.stringify(msg));
         };
@@ -86,8 +88,34 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (data.type === 'orderbook') {
                 renderOrderbook(data.orderbook_units);
+            } else if (data.type === 'ticker') {
+                // 최초 1회만 현재가를 주문창 가격에 세팅
+                if (!isPriceInitialized) {
+                    const buyPriceInput = document.querySelector('#buy-panel .price-input');
+                    const sellPriceInput = document.querySelector('#sell-panel .price-input');
+                    
+                    // 현재가에도 콤마 포맷팅 적용
+                    const formattedPrice = formatNumberWithCommas(data.trade_price);
+                    
+                    if (buyPriceInput) buyPriceInput.value = formattedPrice;
+                    if (sellPriceInput) sellPriceInput.value = formattedPrice;
+                    
+                    isPriceInitialized = true;
+                    
+                    // 초기 총액 계산
+                    calcTotal('#buy-panel');
+                    calcTotal('#sell-panel');
+                }
             }
         };
+    }
+
+    // 콤마 포맷팅 헬퍼 함수
+    function formatNumberWithCommas(val) {
+        if (!val) return '';
+        const num = parseFloat(val.toString().replace(/,/g, ''));
+        if (isNaN(num)) return '';
+        return new Intl.NumberFormat('ko-KR').format(num);
     }
 
     function renderOrderbook(units) {
@@ -129,15 +157,16 @@ document.addEventListener('DOMContentLoaded', () => {
         askList.innerHTML = askHtml;
         bidList.innerHTML = bidHtml;
 
-        // 호가 클릭 이벤트 바인딩 (클릭 시 주문 폼 가격에 자동 입력)
+        // 호가 클릭 이벤트 바인딩 (클릭 시 주문 폼 가격에 자동 입력 및 콤마 포맷팅)
         document.querySelectorAll('.orderbook-row').forEach(row => {
             row.addEventListener('click', () => {
                 const price = row.getAttribute('data-price');
                 const buyPriceInput = document.querySelector('#buy-panel .price-input');
                 const sellPriceInput = document.querySelector('#sell-panel .price-input');
                 
-                if (buyPriceInput) buyPriceInput.value = price;
-                if (sellPriceInput) sellPriceInput.value = price;
+                const formattedPrice = formatNumberWithCommas(price);
+                if (buyPriceInput) buyPriceInput.value = formattedPrice;
+                if (sellPriceInput) sellPriceInput.value = formattedPrice;
                 
                 // 총액 재계산
                 calcTotal('#buy-panel');
@@ -159,7 +188,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const amountInput = panel.querySelector('.amount-input');
         const totalSpan = panel.querySelectorAll('.form-row span')[3]; // 주문총액 텍스트 영역
         
-        const price = parseFloat(priceInput.value) || 0;
+        // 콤마 제거 후 숫자 파싱
+        const price = parseFloat(priceInput.value.replace(/,/g, '')) || 0;
         const amount = parseFloat(amountInput.value) || 0;
         const total = price * amount;
         
@@ -168,8 +198,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 인풋 값 변경 시 총액 재계산
-    document.querySelectorAll('.price-input, .amount-input').forEach(input => {
+    // 인풋 값 변경 시 콤마 자동 생성 및 총액 재계산
+    document.querySelectorAll('.price-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+            // 숫자 이외의 문자 제거
+            let rawValue = e.target.value.replace(/[^0-9]/g, '');
+            e.target.value = formatNumberWithCommas(rawValue);
+            calcTotal('#buy-panel');
+            calcTotal('#sell-panel');
+        });
+    });
+
+    document.querySelectorAll('.amount-input').forEach(input => {
         input.addEventListener('input', () => {
             calcTotal('#buy-panel');
             calcTotal('#sell-panel');
@@ -181,7 +221,8 @@ document.addEventListener('DOMContentLoaded', () => {
     buyPercentBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const percent = parseInt(btn.innerText);
-            const price = parseFloat(document.querySelector('#buy-panel .price-input').value);
+            const priceVal = document.querySelector('#buy-panel .price-input').value;
+            const price = parseFloat(priceVal.replace(/,/g, ''));
             
             // 보유 원화 잔고 파싱 (화면에 표시된 콤마 제거)
             const krwText = document.getElementById('order-possible-krw').innerText.replace(/,/g, '');
@@ -207,7 +248,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const panelId = type === 'buy' ? '#buy-panel' : '#sell-panel';
         const panel = document.querySelector(panelId);
         
-        const price = parseFloat(panel.querySelector('.price-input').value);
+        const priceVal = panel.querySelector('.price-input').value;
+        const price = parseFloat(priceVal.replace(/,/g, ''));
         const volume = parseFloat(panel.querySelector('.amount-input').value);
         
         if (!price || !volume || price <= 0 || volume <= 0) {
