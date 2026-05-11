@@ -226,10 +226,8 @@
                             </div>
                             <!-- 차트가 여기에 렌더링됩니다 -->
                         </div>
+                        </div>
                     </div>
-                    
-                    <!-- 호가창이 들어갈 임시 자리 (추후 구현) -->
-                    <div id="orderbook-placeholder" style="display:none;"></div>
                 </main>
                 
                 <!-- 우측 매수/매도 시스템 패널 -->
@@ -370,6 +368,24 @@
                     <div id="history-panel" class="order-form-container" style="display: none;">
                         <div class="order-form" style="text-align: center; color: var(--text-muted); padding-top: 3rem;">
                             아직 거래 내역이 없습니다.
+                        </div>
+                    </div>
+
+                    <!-- 호가창 (Orderbook) 패널: 매수/매도 버튼 하단에 배치 -->
+                    <div id="orderbook-panel" style="width: 100%; border-top: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; background: rgba(0,0,0,0.2); margin-top: 1rem; flex: 1; min-height: 300px;">
+                        <div style="padding: 0.6rem; font-size: 0.85rem; font-weight: 600; color: var(--text-main); border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; background: rgba(255,255,255,0.02);">
+                            일반 호가
+                        </div>
+                        <div id="orderbook-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; font-size: 0.75rem;">
+                            <!-- 매도 호가 (파란색 계열) -->
+                            <div id="ask-list" style="display: flex; flex-direction: column-reverse; background-color: rgba(59, 130, 246, 0.05);">
+                                <!-- order.js에서 동적 생성 -->
+                            </div>
+                            
+                            <!-- 매수 호가 (빨간색 계열) -->
+                            <div id="bid-list" style="display: flex; flex-direction: column; background-color: rgba(239, 68, 68, 0.05);">
+                                <!-- order.js에서 동적 생성 -->
+                            </div>
                         </div>
                     </div>
                 </aside>
