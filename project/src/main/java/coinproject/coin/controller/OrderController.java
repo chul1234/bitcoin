@@ -68,4 +68,18 @@ public class OrderController {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "입력값이 올바르지 않거나 서버 에러가 발생했습니다."));
         }
     }
+
+    @GetMapping
+    public ResponseEntity<?> getUserOrders(@RequestHeader(value = "X-User-Id", required = false) String userIdHeader) {
+        if (userIdHeader == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "로그인이 필요합니다."));
+        }
+
+        try {
+            java.util.List<Order> orders = orderService.getUserOrders(userIdHeader);
+            return ResponseEntity.ok(Map.of("success", true, "data", orders));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "주문 내역 조회 실패: " + e.getMessage()));
+        }
+    }
 }

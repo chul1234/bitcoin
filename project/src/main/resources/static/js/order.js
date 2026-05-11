@@ -27,8 +27,72 @@ document.addEventListener('DOMContentLoaded', () => {
                     panel.style.display = 'none';
                 }
             });
+
+            // 5. '거래내역' 탭일 경우 API 호출
+            if (targetId === 'history-panel') {
+                fetchOrderHistory();
+            }
         });
     });
+
+    // 주문 내역 API 호출 및 렌더링
+    async function fetchOrderHistory() {
+        const userId = sessionStorage.getItem('loggedInUserId');
+        if (!userId) return;
+
+        try {
+            const res = await fetch('/api/orders', {
+                headers: { 'X-User-Id': userId }
+            });
+            const result = await res.json();
+            
+            const historyList = document.getElementById('history-list');
+            if (!historyList) return;
+
+            if (result.success && result.data && result.data.length > 0) {
+                let html = '';
+                result.data.forEach(order => {
+                    // order.side: BUY or SELL
+                    const isBuy = order.side === 'BUY';
+                    const color = isBuy ? '#EF4444' : '#3B82F6';
+                    const typeText = isBuy ? '매수' : '매도';
+                    
+                    const price = new Intl.NumberFormat('ko-KR').format(order.price);
+                    const vol = parseFloat(order.volume).toFixed(8);
+                    // order.createdAt (예: "2026-05-11T12:00:00") -> 포맷팅
+                    const date = new Date(order.createdAt).toLocaleString('ko-KR', {
+                        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
+                    });
+
+                    html += `
+                        <div style="background: rgba(255,255,255,0.03); padding: 0.6rem; border-radius: 4px; border-left: 3px solid ${color};">
+                            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                                <span style="color:${color}; font-weight:bold;">${typeText} (${order.state === 'DONE' ? '체결' : order.state})</span>
+                                <span style="color:var(--text-muted); font-size:0.75rem;">${date}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom: 2px;">
+                                <span style="color:var(--text-muted);">단가</span>
+                                <span>${price} KRW</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="color:var(--text-muted);">수량</span>
+                                <span>${vol} BTC</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                historyList.innerHTML = html;
+            } else {
+                historyList.innerHTML = `
+                    <div style="text-align: center; color: var(--text-muted); padding-top: 3rem;">
+                        아직 거래 내역이 없습니다.
+                    </div>
+                `;
+            }
+        } catch (e) {
+            console.error('거래 내역을 불러오는데 실패했습니다.', e);
+        }
+    }
 
     // 주문구분(라디오 버튼) 변경 시 '감시가' 입력 필드 표시/숨김 제어
     const buyRadios = document.querySelectorAll('input[name="buyOrderType"]');

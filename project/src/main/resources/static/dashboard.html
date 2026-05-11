@@ -365,9 +365,11 @@
                     </div>
 
                     <!-- 거래내역(History) 패널 -->
-                    <div id="history-panel" class="order-form-container" style="display: none;">
-                        <div class="order-form" style="text-align: center; color: var(--text-muted); padding-top: 3rem;">
-                            아직 거래 내역이 없습니다.
+                    <div id="history-panel" class="order-form-container" style="display: none; padding: 0.5rem; max-height: 400px; overflow-y: auto;">
+                        <div id="history-list" style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem;">
+                            <div style="text-align: center; color: var(--text-muted); padding-top: 3rem;">
+                                아직 거래 내역이 없습니다.
+                            </div>
                         </div>
                     </div>
 

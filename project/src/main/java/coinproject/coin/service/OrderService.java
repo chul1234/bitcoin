@@ -122,4 +122,14 @@ public class OrderService {
         
         return orderRepository.save(order);
     }
+
+    /**
+     * 유저의 전체 주문 내역 최신순 조회
+     */
+    @Transactional(readOnly = true)
+    public java.util.List<Order> getUserOrders(String userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        return orderRepository.findByUserOrderByCreatedAtDesc(user);
+    }
 }
