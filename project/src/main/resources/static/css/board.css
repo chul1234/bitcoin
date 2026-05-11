@@ -295,3 +295,17 @@
 .submit-btn:hover {
     background: var(--accent-hover);
 }
+
+/* Toast UI Editor 상세 뷰 글씨 색상 연동 (다크모드 호환) */
+.toastui-editor-contents,
+.toastui-editor-contents p,
+.toastui-editor-contents span,
+.toastui-editor-contents h1,
+.toastui-editor-contents h2,
+.toastui-editor-contents h3,
+.toastui-editor-contents h4,
+.toastui-editor-contents h5,
+.toastui-editor-contents h6,
+.toastui-editor-contents li {
+    color: var(--text-main) !important;
+}

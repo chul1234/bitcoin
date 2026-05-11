@@ -10,6 +10,11 @@
     <!-- 스타일시트 -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/board.css">
+    
+    <!-- Toast UI Editor CSS -->
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
+    <!-- 다크 모드용 CSS -->
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/theme/toastui-editor-dark.min.css" />
 </head>
 <body>
     <div id="dashboard-screen" class="screen view-active">
@@ -110,7 +115,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">내용</label>
-                    <textarea id="post-content-input" class="form-textarea" placeholder="자유롭게 의견을 남겨주세요."></textarea>
+                    <div id="post-content-editor" style="background-color: var(--bg-color); text-align: left;"></div>
                 </div>
             </div>
             
@@ -144,7 +149,7 @@
                         <span style="font-size:1.1rem;">👁️</span> <span id="detail-views">0</span>
                     </div>
                 </div>
-                <div style="color:var(--text-main); font-size:1rem; line-height:1.6; white-space:pre-wrap; margin-bottom: 3rem;" id="detail-content">내용</div>
+                <div style="color:var(--text-main); font-size:1rem; line-height:1.6; margin-bottom: 3rem;" id="detail-content" class="toastui-editor-contents">내용</div>
                 
                 <!-- 댓글 영역 (동적 렌더링) -->
                 <div class="comments-section" style="border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
@@ -170,6 +175,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Toast UI Editor JS -->
+    <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
 
     <!-- 공통 로그인 세션 체크 스크립트 연결 -->
     <script src="js/common.js"></script>

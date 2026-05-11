@@ -33,8 +33,64 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 폼 입력 요소
     const titleInput = document.getElementById('post-title-input');
-    const contentInput = document.getElementById('post-content-input');
     const anonToggle = document.getElementById('anon-toggle');
+    
+    // Toast UI Editor 인스턴스 생성
+    let editor;
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    const editorTheme = isDarkMode ? 'dark' : 'default';
+
+    editor = new toastui.Editor({
+        el: document.querySelector('#post-content-editor'),
+        height: '400px',
+        initialEditType: 'wysiwyg',
+        previewStyle: 'vertical',
+        theme: editorTheme,
+        hooks: {
+            // 이미지 드래그 앤 드롭 / 붙여넣기 시 가로채기
+            addImageBlobHook: async (blob, callback) => {
+                const formData = new FormData();
+                formData.append('file', blob);
+
+                try {
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    if (response.ok && result.url) {
+                        // 성공 시 반환받은 URL을 에디터에 삽입
+                        callback(result.url, 'image');
+                    } else {
+                        alert('이미지 업로드에 실패했습니다: ' + (result.error || '알 수 없는 오류'));
+                        callback('image_load_failed', 'image');
+                    }
+                } catch (error) {
+                    console.error('업로드 에러:', error);
+                    alert('서버와 통신 중 오류가 발생했습니다.');
+                    callback('image_load_failed', 'image');
+                }
+            }
+        }
+    });
+
+    // 전역 테마 변경 시 에디터 테마 동기화 (간이)
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'data-theme') {
+                const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
+                // 에디터는 생성 후 테마를 바꾸는 공식 API가 없어 새로 렌더링하거나 클래스명 강제 조정이 필요
+                // 여기서는 간이로 클래스 추가/삭제 방식 적용
+                const editorEl = document.querySelector('.toastui-editor-defaultUI');
+                if(editorEl) {
+                    if(newTheme === 'dark') editorEl.classList.add('toastui-editor-dark');
+                    else editorEl.classList.remove('toastui-editor-dark');
+                }
+            }
+        });
+    });
+    observer.observe(document.documentElement, { attributes: true });
     const noticeToggleWrapper = document.getElementById('notice-toggle-wrapper');
     const noticeToggle = document.getElementById('notice-toggle');
     const saveBtn = document.getElementById('save-post-btn');
@@ -181,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalOverlay.classList.remove('active');
         setTimeout(() => {
             titleInput.value = '';
-            contentInput.value = '';
+            editor.setHTML('');
             anonToggle.checked = false;
             if (noticeToggle) noticeToggle.checked = false;
             currentEditingPostId = null;
@@ -201,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
         detailTitle.innerText = post.title;
         detailAuthor.innerHTML = renderAuthorBadge(post.author, post.isAnon);
         detailDate.innerText = formatDate(post.date);
-        detailContent.innerText = post.content;
+        detailContent.innerHTML = post.content;
         if (detailViews) detailViews.innerText = post.viewCount || 0;
         
         formView.style.display = 'none';
@@ -484,7 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTitle.innerText = '게시글 수정';
         
         titleInput.value = post.title;
-        contentInput.value = post.content;
+        editor.setHTML(post.content || '');
         anonToggle.checked = post.isAnon;
         if (isAdmin) {
             noticeToggle.checked = post.isNotice || false;
@@ -521,7 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 글 저장 (신규 작성 및 수정)
     saveBtn.addEventListener('click', async () => {
         const title = titleInput.value.trim();
-        const content = contentInput.value.trim();
+        const content = editor.getHTML();
         const isAnon = anonToggle.checked;
         
         if (!title) return alert('제목을 입력해주세요.');
