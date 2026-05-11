@@ -124,6 +124,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.changeMarket) {
                     window.changeMarket(coin.market, coin.korean_name);
                 }
+                
+                // order.js에 정의된 주문창 시장변경 훅 호출
+                if (window.changeOrderMarket) {
+                    window.changeOrderMarket(coin.market);
+                }
             });
 
             listContainer.appendChild(el);

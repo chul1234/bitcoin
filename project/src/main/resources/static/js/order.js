@@ -128,6 +128,29 @@ document.addEventListener('DOMContentLoaded', () => {
     let ws = null;
     let isPriceInitialized = false; // 최초 1회 현재가 자동 기입 플래그
 
+    // 외부(coinList.js)에서 코인 변경 시 호출할 훅
+    window.changeOrderMarket = function(market) {
+        currentMarket = market;
+        isPriceInitialized = false; // 새 코인 가격으로 갱신하도록 리셋
+        
+        // 기존 수량 및 가격 입력 초기화
+        const buyPriceInput = document.querySelector('#buy-panel .price-input');
+        const sellPriceInput = document.querySelector('#sell-panel .price-input');
+        const buyVolInput = document.querySelector('#buy-panel .vol-input');
+        const sellVolInput = document.querySelector('#sell-panel .vol-input');
+        
+        if (buyPriceInput) buyPriceInput.value = '0';
+        if (sellPriceInput) sellPriceInput.value = '0';
+        if (buyVolInput) buyVolInput.value = '';
+        if (sellVolInput) sellVolInput.value = '';
+        
+        calcTotal('#buy-panel');
+        calcTotal('#sell-panel');
+
+        // 주문 호가창 및 Ticker 웹소켓 재연결
+        connectOrderbookWS();
+    };
+
     function connectOrderbookWS() {
         if (ws) {
             ws.close();
