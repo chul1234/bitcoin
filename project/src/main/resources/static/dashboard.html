@@ -277,8 +277,8 @@
                             </div>
 
                             <div class="order-input-group">
-                                <input type="number" placeholder="0 (주문 수량)" class="amount-input">
-                                <span class="unit">BTC</span>
+                                <input type="number" step="any" placeholder="0 (주문 수량)" class="amount-input">
+                                <span class="unit coin-unit-label">BTC</span>
                             </div>
 
                             <div class="order-percentages">
@@ -290,7 +290,7 @@
 
                             <div class="form-row" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
                                 <span>주문총액</span>
-                                <span style="font-size: 1.2rem; font-weight: 700; color:var(--text-main);">0 <span style="font-size:0.8rem; color:var(--text-muted);">KRW</span></span>
+                                <span class="order-total-val" style="font-size: 1.2rem; font-weight: 700; color:var(--text-main);">0 <span style="font-size:0.8rem; color:var(--text-muted);">KRW</span></span>
                             </div>
 
                             <div class="trade-btn-group">
@@ -323,7 +323,7 @@
 
                             <div class="form-row" style="margin-top: 0.5rem;">
                                 <span>매도가능</span>
-                                <span style="color:var(--text-main); font-weight:700;">0 <span style="font-size:0.8rem; color:var(--text-muted);">BTC</span></span>
+                                <span style="color:var(--text-main); font-weight:700;"><span id="available-coin">0</span> <span id="available-coin-unit" style="font-size:0.8rem; color:var(--text-muted);">BTC</span></span>
                             </div>
 
                             <!-- 감시가 (예약-지정가일 때만 노출) -->
@@ -338,8 +338,8 @@
                             </div>
 
                             <div class="order-input-group">
-                                <input type="number" placeholder="0 (주문 수량)" class="amount-input">
-                                <span class="unit">BTC</span>
+                                <input type="number" step="any" placeholder="0 (주문 수량)" class="amount-input">
+                                <span class="unit coin-unit-label">BTC</span>
                             </div>
 
                             <div class="order-percentages">
@@ -351,7 +351,7 @@
 
                             <div class="form-row" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
                                 <span>주문총액</span>
-                                <span style="font-size: 1.2rem; font-weight: 700; color:var(--text-main);">0 <span style="font-size:0.8rem; color:var(--text-muted);">KRW</span></span>
+                                <span class="order-total-val" style="font-size: 1.2rem; font-weight: 700; color:var(--text-main);">0 <span style="font-size:0.8rem; color:var(--text-muted);">KRW</span></span>
                             </div>
 
                             <div class="trade-btn-group">

@@ -57,6 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const color = isBuy ? '#EF4444' : '#3B82F6';
                     const typeText = isBuy ? '매수' : '매도';
                     
+                    // 예: "KRW-BTC" -> "BTC"
+                    const coinSymbol = order.market ? order.market.split('-')[1] : 'BTC';
+                    
                     const price = new Intl.NumberFormat('ko-KR').format(order.price);
                     const vol = parseFloat(order.volume).toFixed(8);
                     // order.createdAt (예: "2026-05-11T12:00:00") -> 포맷팅
@@ -71,12 +74,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span style="color:var(--text-muted); font-size:0.75rem;">${date}</span>
                             </div>
                             <div style="display:flex; justify-content:space-between; margin-bottom: 2px;">
+                                <span style="color:var(--text-muted);">종목</span>
+                                <span style="color:var(--text-main); font-weight:500;">${order.market}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom: 2px;">
                                 <span style="color:var(--text-muted);">단가</span>
                                 <span>${price} KRW</span>
                             </div>
                             <div style="display:flex; justify-content:space-between;">
                                 <span style="color:var(--text-muted);">수량</span>
-                                <span>${vol} BTC</span>
+                                <span>${vol} ${coinSymbol}</span>
                             </div>
                         </div>
                     `;
@@ -149,7 +156,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 주문 호가창 및 Ticker 웹소켓 재연결
         connectOrderbookWS();
+        updateAvailableCoinBalance();
     };
+
+    // 매도 가능 수량(현재 선택된 코인의 보유 잔고)을 불러오는 함수
+    async function updateAvailableCoinBalance() {
+        const userId = sessionStorage.getItem('loggedInUserId');
+        if (!userId) return;
+
+        const coinSymbol = currentMarket.split('-')[1]; // KRW-BTC -> BTC
+        
+        // 매도가능 항목 단위 텍스트 변경
+        const unitEl = document.getElementById('available-coin-unit');
+        if (unitEl) unitEl.innerText = coinSymbol;
+        
+        // 수량 입력창 우측 단위(BTC -> 현재 코인) 텍스트 변경
+        const unitLabels = document.querySelectorAll('.coin-unit-label');
+        unitLabels.forEach(label => label.innerText = coinSymbol);
+
+        try {
+            const res = await fetch(`/api/assets/${coinSymbol}`, {
+                headers: { 'X-User-Id': userId }
+            });
+            const result = await res.json();
+            
+            const coinSpan = document.getElementById('available-coin');
+            if (result.success && result.data) {
+                const balance = parseFloat(result.data.balance);
+                if (coinSpan) coinSpan.innerText = balance.toFixed(8);
+            } else {
+                if (coinSpan) coinSpan.innerText = '0';
+            }
+        } catch(e) {
+            console.error('보유 코인 잔고 조회 실패', e);
+        }
+    }
+
+    // 초기 로딩 시에도 매도가능 수량 불러오기
+    updateAvailableCoinBalance();
 
     function connectOrderbookWS() {
         if (ws) {
@@ -273,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const priceInput = panel.querySelector('.price-input');
         const amountInput = panel.querySelector('.amount-input');
-        const totalSpan = panel.querySelectorAll('.form-row span')[3]; // 주문총액 텍스트 영역
+        const totalSpan = panel.querySelector('.order-total-val'); // 주문총액 텍스트 영역
         
         // 콤마 제거 후 숫자 파싱
         const price = parseFloat(priceInput.value.replace(/,/g, '')) || 0;
@@ -324,6 +368,29 @@ document.addEventListener('DOMContentLoaded', () => {
             
             document.querySelector('#buy-panel .amount-input').value = amount.toFixed(8);
             calcTotal('#buy-panel');
+        });
+    });
+
+    // 매도 비율 버튼 (10%, 25%, 50%, 100%)
+    const sellPercentBtns = document.querySelectorAll('#sell-panel .btn-percent');
+    sellPercentBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const percent = parseInt(btn.innerText);
+            
+            // 화면에 표시된 보유 코인 잔고 파싱
+            const coinSpan = document.getElementById('available-coin');
+            if (!coinSpan) return;
+            const coinText = coinSpan.innerText.replace(/,/g, '');
+            const coinBalance = parseFloat(coinText) || 0;
+
+            if (coinBalance <= 0) {
+                return alert('매도할 수 있는 보유 코인이 없습니다.');
+            }
+
+            const targetAmount = coinBalance * (percent / 100);
+            
+            document.querySelector('#sell-panel .amount-input').value = targetAmount.toFixed(8);
+            calcTotal('#sell-panel');
         });
     });
 
