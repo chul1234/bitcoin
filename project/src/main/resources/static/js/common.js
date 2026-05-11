@@ -47,4 +47,38 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // 4. 자산 조회 로직 (백엔드에서 자동 천만 원 주입)
+    async function checkAndInitializeAssets() {
+        const loggedInUserId = sessionStorage.getItem('loggedInUserId');
+        if (!loggedInUserId) return; // 비로그인 시 무시
+
+        try {
+            const res = await fetch('/api/assets/KRW', {
+                headers: {
+                    'X-User-Id': loggedInUserId
+                }
+            });
+            const result = await res.json();
+            
+            if (result.success && result.data) {
+                // 백엔드에서 잔고를 주거나 1000만원을 자동 세팅해서 내려줌
+                const krwBalance = result.data.balance;
+                const formattedBalance = new Intl.NumberFormat('ko-KR').format(krwBalance);
+                
+                const orderKrwSpan = document.getElementById('order-possible-krw');
+                if (orderKrwSpan) orderKrwSpan.innerText = formattedBalance;
+                
+                if (result.message && result.message.includes('시드머니')) {
+                    // 최초 1회 자동 지급된 경우 (alert 안 띄워도 되지만 원하시면 주석 해제)
+                    // alert(result.message);
+                }
+            }
+        } catch (e) {
+            console.error('자산 조회 에러:', e);
+        }
+    }
+
+    // 페이지 로드 시 자산 확인 실행
+    checkAndInitializeAssets();
 });
