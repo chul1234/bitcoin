@@ -67,10 +67,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
                     });
 
+                    // order.state 변환
+                    let stateText = order.state;
+                    let stateColor = color;
+                    if (order.state === 'DONE') {
+                        stateText = '체결';
+                    } else if (order.state === 'PENDING') {
+                        stateText = '미체결(대기)';
+                        stateColor = '#F59E0B'; // 주황색
+                    } else if (order.state === 'CANCELED') {
+                        stateText = '취소됨';
+                        stateColor = 'var(--text-muted)';
+                    }
+
+                    const cancelButton = order.state === 'PENDING' 
+                        ? `<button class="btn-cancel-order" data-id="${order.id}" style="margin-top:4px; padding:2px 8px; font-size:0.7rem; background:transparent; border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">주문 취소</button>` 
+                        : '';
+
                     html += `
-                        <div style="background: rgba(255,255,255,0.03); padding: 0.6rem; border-radius: 4px; border-left: 3px solid ${color};">
+                        <div style="background: rgba(255,255,255,0.03); padding: 0.6rem; border-radius: 4px; border-left: 3px solid ${stateColor};">
                             <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-                                <span style="color:${color}; font-weight:bold;">${typeText} (${order.state === 'DONE' ? '체결' : order.state})</span>
+                                <span style="color:${stateColor}; font-weight:bold;">${typeText} (${stateText})</span>
                                 <span style="color:var(--text-muted); font-size:0.75rem;">${date}</span>
                             </div>
                             <div style="display:flex; justify-content:space-between; margin-bottom: 2px;">
@@ -81,14 +98,43 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span style="color:var(--text-muted);">단가</span>
                                 <span>${price} KRW</span>
                             </div>
-                            <div style="display:flex; justify-content:space-between;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
                                 <span style="color:var(--text-muted);">수량</span>
-                                <span>${vol} ${coinSymbol}</span>
+                                <div style="text-align:right;">
+                                    <div>${vol} ${coinSymbol}</div>
+                                    ${cancelButton}
+                                </div>
                             </div>
                         </div>
                     `;
                 });
                 historyList.innerHTML = html;
+
+                // 취소 버튼 이벤트 바인딩
+                document.querySelectorAll('.btn-cancel-order').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const orderId = e.target.getAttribute('data-id');
+                        if (confirm('미체결 주문을 취소하시겠습니까? 묶인 자산이 환불됩니다.')) {
+                            try {
+                                const cancelRes = await fetch(`/api/orders/${orderId}/cancel`, {
+                                    method: 'POST',
+                                    headers: { 'X-User-Id': userId }
+                                });
+                                const cancelData = await cancelRes.json();
+                                if (cancelRes.ok && cancelData.success) {
+                                    alert(cancelData.message);
+                                    fetchOrderHistory(); // 목록 새로고침
+                                    if(window.fetchUserAsset) window.fetchUserAsset(); // 잔고 갱신
+                                } else {
+                                    alert('취소 실패: ' + (cancelData.message || '서버 오류'));
+                                }
+                            } catch (err) {
+                                console.error(err);
+                                alert('주문 취소 중 오류가 발생했습니다.');
+                            }
+                        }
+                    });
+                });
             } else {
                 historyList.innerHTML = `
                     <div style="text-align: center; color: var(--text-muted); padding-top: 3rem;">
@@ -104,27 +150,47 @@ document.addEventListener('DOMContentLoaded', () => {
     // 주문구분(라디오 버튼) 변경 시 '감시가' 입력 필드 표시/숨김 제어
     const buyRadios = document.querySelectorAll('input[name="buyOrderType"]');
     const buyTriggerRow = document.querySelector('#buy-panel .trigger-price-row');
+    const buyPriceInput = document.querySelector('#buy-panel .price-input');
     
     buyRadios.forEach(radio => {
         radio.addEventListener('change', (e) => {
             if (e.target.value === 'stop_limit') {
                 buyTriggerRow.style.display = 'flex';
+                buyPriceInput.disabled = false;
+                if (buyPriceInput.value === '시장가 체결') buyPriceInput.value = formatNumberWithCommas(currentTickerPrice);
+            } else if (e.target.value === 'market') {
+                buyTriggerRow.style.display = 'none';
+                buyPriceInput.disabled = true;
+                buyPriceInput.value = '시장가 체결';
             } else {
                 buyTriggerRow.style.display = 'none';
+                buyPriceInput.disabled = false;
+                if (buyPriceInput.value === '시장가 체결') buyPriceInput.value = formatNumberWithCommas(currentTickerPrice);
             }
+            calcTotal('#buy-panel');
         });
     });
 
     const sellRadios = document.querySelectorAll('input[name="sellOrderType"]');
     const sellTriggerRow = document.querySelector('#sell-panel .trigger-price-row');
+    const sellPriceInput = document.querySelector('#sell-panel .price-input');
     
     sellRadios.forEach(radio => {
         radio.addEventListener('change', (e) => {
             if (e.target.value === 'stop_limit') {
                 sellTriggerRow.style.display = 'flex';
+                sellPriceInput.disabled = false;
+                if (sellPriceInput.value === '시장가 체결') sellPriceInput.value = formatNumberWithCommas(currentTickerPrice);
+            } else if (e.target.value === 'market') {
+                sellTriggerRow.style.display = 'none';
+                sellPriceInput.disabled = true;
+                sellPriceInput.value = '시장가 체결';
             } else {
                 sellTriggerRow.style.display = 'none';
+                sellPriceInput.disabled = false;
+                if (sellPriceInput.value === '시장가 체결') sellPriceInput.value = formatNumberWithCommas(currentTickerPrice);
             }
+            calcTotal('#sell-panel');
         });
     });
 
@@ -134,6 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentMarket = 'KRW-BTC'; // 기본 코인
     let ws = null;
     let isPriceInitialized = false; // 최초 1회 현재가 자동 기입 플래그
+    let currentTickerPrice = 0; // 시장가 체결 시 사용할 현재가
 
     // 외부(coinList.js)에서 코인 변경 시 호출할 훅
     window.changeOrderMarket = function(market) {
@@ -220,6 +287,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.type === 'orderbook') {
                 renderOrderbook(data.orderbook_units);
             } else if (data.type === 'ticker') {
+                currentTickerPrice = data.trade_price; // 현재가 지속 업데이트
+
                 // 최초 1회만 현재가를 주문창 가격에 세팅
                 if (!isPriceInitialized) {
                     const buyPriceInput = document.querySelector('#buy-panel .price-input');
@@ -228,8 +297,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 현재가에도 콤마 포맷팅 적용
                     const formattedPrice = formatNumberWithCommas(data.trade_price);
                     
-                    if (buyPriceInput) buyPriceInput.value = formattedPrice;
-                    if (sellPriceInput) sellPriceInput.value = formattedPrice;
+                    if (buyPriceInput && !buyPriceInput.disabled) buyPriceInput.value = formattedPrice;
+                    if (sellPriceInput && !sellPriceInput.disabled) sellPriceInput.value = formattedPrice;
                     
                     isPriceInitialized = true;
                     
@@ -296,8 +365,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sellPriceInput = document.querySelector('#sell-panel .price-input');
                 
                 const formattedPrice = formatNumberWithCommas(price);
-                if (buyPriceInput) buyPriceInput.value = formattedPrice;
-                if (sellPriceInput) sellPriceInput.value = formattedPrice;
+                if (buyPriceInput && !buyPriceInput.disabled) buyPriceInput.value = formattedPrice;
+                if (sellPriceInput && !sellPriceInput.disabled) sellPriceInput.value = formattedPrice;
                 
                 // 총액 재계산
                 calcTotal('#buy-panel');
@@ -319,8 +388,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const amountInput = panel.querySelector('.amount-input');
         const totalSpan = panel.querySelector('.order-total-val'); // 주문총액 텍스트 영역
         
-        // 콤마 제거 후 숫자 파싱
-        const price = parseFloat(priceInput.value.replace(/,/g, '')) || 0;
+        let price = 0;
+        if (priceInput.disabled && priceInput.value === '시장가 체결') {
+            price = currentTickerPrice;
+        } else {
+            price = parseFloat(priceInput.value.replace(/,/g, '')) || 0;
+        }
+
         const amount = parseFloat(amountInput.value) || 0;
         const total = price * amount;
         
@@ -352,8 +426,13 @@ document.addEventListener('DOMContentLoaded', () => {
     buyPercentBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const percent = parseInt(btn.innerText);
-            const priceVal = document.querySelector('#buy-panel .price-input').value;
-            const price = parseFloat(priceVal.replace(/,/g, ''));
+            const priceInput = document.querySelector('#buy-panel .price-input');
+            let price = 0;
+            if (priceInput.disabled && priceInput.value === '시장가 체결') {
+                price = currentTickerPrice;
+            } else {
+                price = parseFloat(priceInput.value.replace(/,/g, ''));
+            }
             
             // 보유 원화 잔고 파싱 (화면에 표시된 콤마 제거)
             const krwText = document.getElementById('order-possible-krw').innerText.replace(/,/g, '');
@@ -402,8 +481,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const panelId = type === 'buy' ? '#buy-panel' : '#sell-panel';
         const panel = document.querySelector(panelId);
         
-        const priceVal = panel.querySelector('.price-input').value;
-        const price = parseFloat(priceVal.replace(/,/g, ''));
+        const radioName = type === 'buy' ? 'buyOrderType' : 'sellOrderType';
+        const orderTypeRadio = document.querySelector(`input[name="${radioName}"]:checked`);
+        const orderType = orderTypeRadio ? orderTypeRadio.value.toUpperCase() : 'LIMIT';
+
+        const priceInput = panel.querySelector('.price-input');
+        let price = 0;
+        if (orderType === 'MARKET') {
+            price = currentTickerPrice;
+        } else {
+            price = parseFloat(priceInput.value.replace(/,/g, ''));
+        }
+        
         const volume = parseFloat(panel.querySelector('.amount-input').value);
         
         if (!price || !volume || price <= 0 || volume <= 0) {
@@ -421,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     market: currentMarket,
                     price: price,
                     volume: volume,
-                    orderType: 'LIMIT'
+                    orderType: orderType
                 })
             });
             const result = await res.json();

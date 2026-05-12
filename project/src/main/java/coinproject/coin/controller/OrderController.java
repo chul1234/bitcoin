@@ -34,7 +34,8 @@ public class OrderController {
             }
 
             Order order = orderService.buyOrder(userIdHeader, market, price, volume, orderType);
-            return ResponseEntity.ok(Map.of("success", true, "message", "매수 주문이 체결되었습니다.", "data", order));
+            String msg = "DONE".equals(order.getState()) ? "매수 주문이 즉시 체결되었습니다." : "매수 지정가 주문이 대기(PENDING) 상태로 등록되었습니다.";
+            return ResponseEntity.ok(Map.of("success", true, "message", msg, "data", order));
         } catch (IllegalStateException e) {
             // 잔고 부족 등 비즈니스 로직 에러
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
@@ -61,7 +62,8 @@ public class OrderController {
             }
 
             Order order = orderService.sellOrder(userIdHeader, market, price, volume, orderType);
-            return ResponseEntity.ok(Map.of("success", true, "message", "매도 주문이 체결되었습니다.", "data", order));
+            String msg = "DONE".equals(order.getState()) ? "매도 주문이 즉시 체결되었습니다." : "매도 지정가 주문이 대기(PENDING) 상태로 등록되었습니다.";
+            return ResponseEntity.ok(Map.of("success", true, "message", msg, "data", order));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {
@@ -80,6 +82,23 @@ public class OrderController {
             return ResponseEntity.ok(Map.of("success", true, "data", orders));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "주문 내역 조회 실패: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{orderId}/cancel")
+    public ResponseEntity<?> cancelOrder(@RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
+                                         @PathVariable Long orderId) {
+        if (userIdHeader == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "로그인이 필요합니다."));
+        }
+
+        try {
+            Order canceledOrder = orderService.cancelOrder(userIdHeader, orderId);
+            return ResponseEntity.ok(Map.of("success", true, "message", "미체결 주문이 취소되고 자산이 환불되었습니다.", "data", canceledOrder));
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "주문 취소 중 서버 에러가 발생했습니다."));
         }
     }
 }

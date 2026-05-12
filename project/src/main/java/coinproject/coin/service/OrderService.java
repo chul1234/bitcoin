@@ -32,7 +32,7 @@ public class OrderService {
 
         BigDecimal totalCost = price.multiply(volume);
 
-        // 1. KRW 지갑 확인 및 잔액 차감
+        // 1. KRW 지갑 확인 및 잔액 차감 (지정가든 시장가든 자산을 먼저 Lock)
         UserAsset krwAsset = userAssetRepository.findByUserAndCurrency(user, "KRW")
                 .orElseThrow(() -> new IllegalStateException("원화(KRW) 지갑이 존재하지 않습니다. 먼저 시드머니를 주입받으세요."));
 
@@ -42,14 +42,44 @@ public class OrderService {
         krwAsset.setBalance(krwAsset.getBalance().subtract(totalCost));
         userAssetRepository.save(krwAsset);
 
-        // 2. 코인 지갑 추가 (market 예: "KRW-BTC" -> "BTC")
-        String currency = market.split("-")[1];
-        Optional<UserAsset> coinAssetOpt = userAssetRepository.findByUserAndCurrency(user, currency);
+        // 2. 체결 상태 결정
+        String state = "MARKET".equalsIgnoreCase(orderType) ? "DONE" : "PENDING";
+
+        // 3. 주문 내역 저장
+        Order order = Order.builder()
+                .user(user)
+                .market(market)
+                .side("BUY")
+                .orderType(orderType)
+                .price(price)
+                .volume(volume)
+                .state(state)
+                .build();
         
+        order = orderRepository.save(order);
+
+        // 4. 시장가면 즉시 코인 지급
+        if ("DONE".equals(state)) {
+            fulfillBuyOrder(order);
+        }
+        
+        return order;
+    }
+
+    /**
+     * 매수 주문 체결 (코인 지급) - 스케줄러나 시장가 체결 시 호출
+     */
+    @Transactional
+    public void fulfillBuyOrder(Order order) {
+        User user = order.getUser();
+        String currency = order.getMarket().split("-")[1];
+        BigDecimal volume = order.getVolume();
+        BigDecimal totalCost = order.getPrice().multiply(volume);
+
+        Optional<UserAsset> coinAssetOpt = userAssetRepository.findByUserAndCurrency(user, currency);
         UserAsset coinAsset;
         if (coinAssetOpt.isPresent()) {
             coinAsset = coinAssetOpt.get();
-            // 평단가 계산: (기존총액 + 신규총액) / (기존수량 + 신규수량)
             BigDecimal oldTotal = coinAsset.getBalance().multiply(coinAsset.getAvgBuyPrice());
             BigDecimal newTotal = oldTotal.add(totalCost);
             BigDecimal newBalance = coinAsset.getBalance().add(volume);
@@ -62,23 +92,13 @@ public class OrderService {
                     .user(user)
                     .currency(currency)
                     .balance(volume)
-                    .avgBuyPrice(price)
+                    .avgBuyPrice(order.getPrice())
                     .build();
         }
         userAssetRepository.save(coinAsset);
-
-        // 3. 주문 내역 저장
-        Order order = Order.builder()
-                .user(user)
-                .market(market)
-                .side("BUY")
-                .orderType(orderType)
-                .price(price)
-                .volume(volume)
-                .state("DONE") // 모의투자는 무조건 즉시 체결 처리
-                .build();
         
-        return orderRepository.save(order);
+        order.setState("DONE");
+        orderRepository.save(order);
     }
 
     /**
@@ -91,7 +111,7 @@ public class OrderService {
 
         String currency = market.split("-")[1];
 
-        // 1. 코인 지갑 확인 및 잔고 차감
+        // 1. 코인 지갑 확인 및 잔고 차감 (자산 Lock)
         UserAsset coinAsset = userAssetRepository.findByUserAndCurrency(user, currency)
                 .orElseThrow(() -> new IllegalStateException("보유하지 않은 코인입니다."));
 
@@ -101,13 +121,8 @@ public class OrderService {
         coinAsset.setBalance(coinAsset.getBalance().subtract(volume));
         userAssetRepository.save(coinAsset);
 
-        // 2. KRW 지갑 수익금 추가
-        BigDecimal totalEarned = price.multiply(volume);
-        UserAsset krwAsset = userAssetRepository.findByUserAndCurrency(user, "KRW")
-                .orElseThrow(() -> new IllegalStateException("원화(KRW) 지갑이 존재하지 않습니다."));
-        
-        krwAsset.setBalance(krwAsset.getBalance().add(totalEarned));
-        userAssetRepository.save(krwAsset);
+        // 2. 체결 상태 결정
+        String state = "MARKET".equalsIgnoreCase(orderType) ? "DONE" : "PENDING";
 
         // 3. 주문 내역 저장
         Order order = Order.builder()
@@ -117,9 +132,66 @@ public class OrderService {
                 .orderType(orderType)
                 .price(price)
                 .volume(volume)
-                .state("DONE")
+                .state(state)
                 .build();
         
+        order = orderRepository.save(order);
+
+        // 4. 시장가면 즉시 원화 지급
+        if ("DONE".equals(state)) {
+            fulfillSellOrder(order);
+        }
+        
+        return order;
+    }
+
+    /**
+     * 매도 주문 체결 (원화 지급) - 스케줄러나 시장가 체결 시 호출
+     */
+    @Transactional
+    public void fulfillSellOrder(Order order) {
+        User user = order.getUser();
+        BigDecimal totalEarned = order.getPrice().multiply(order.getVolume());
+        
+        UserAsset krwAsset = userAssetRepository.findByUserAndCurrency(user, "KRW")
+                .orElseThrow(() -> new IllegalStateException("원화(KRW) 지갑이 존재하지 않습니다."));
+        
+        krwAsset.setBalance(krwAsset.getBalance().add(totalEarned));
+        userAssetRepository.save(krwAsset);
+        
+        order.setState("DONE");
+        orderRepository.save(order);
+    }
+
+    /**
+     * 미체결 주문 취소 및 자산 환불
+     */
+    @Transactional
+    public Order cancelOrder(String userId, Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
+        
+        if (!order.getUser().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("권한이 없습니다.");
+        }
+        if (!"PENDING".equals(order.getState())) {
+            throw new IllegalStateException("미체결 상태의 주문만 취소할 수 있습니다.");
+        }
+
+        // 환불 처리
+        if ("BUY".equalsIgnoreCase(order.getSide())) {
+            BigDecimal totalRefund = order.getPrice().multiply(order.getVolume());
+            UserAsset krwAsset = userAssetRepository.findByUserAndCurrency(order.getUser(), "KRW").get();
+            krwAsset.setBalance(krwAsset.getBalance().add(totalRefund));
+            userAssetRepository.save(krwAsset);
+        } else if ("SELL".equalsIgnoreCase(order.getSide())) {
+            String currency = order.getMarket().split("-")[1];
+            UserAsset coinAsset = userAssetRepository.findByUserAndCurrency(order.getUser(), currency).get();
+            coinAsset.setBalance(coinAsset.getBalance().add(order.getVolume()));
+            userAssetRepository.save(coinAsset);
+        }
+
+        order.setState("CANCELED");
         return orderRepository.save(order);
     }
 
