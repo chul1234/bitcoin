@@ -26,7 +26,7 @@ public class OrderService {
      * 지정가 매수 처리 (모의투자이므로 즉시 체결로 간주)
      */
     @Transactional
-    public Order buyOrder(String userId, String market, BigDecimal price, BigDecimal volume, String orderType) {
+    public Order buyOrder(String userId, String market, BigDecimal price, BigDecimal volume, String orderType, BigDecimal triggerPrice) {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
@@ -43,7 +43,12 @@ public class OrderService {
         userAssetRepository.save(krwAsset);
 
         // 2. 체결 상태 결정
-        String state = "MARKET".equalsIgnoreCase(orderType) ? "DONE" : "PENDING";
+        String state = "PENDING";
+        if ("MARKET".equalsIgnoreCase(orderType)) {
+            state = "DONE";
+        } else if ("STOP_LIMIT".equalsIgnoreCase(orderType)) {
+            state = "WAITING_TRIGGER";
+        }
 
         // 3. 주문 내역 저장
         Order order = Order.builder()
@@ -53,6 +58,7 @@ public class OrderService {
                 .orderType(orderType)
                 .price(price)
                 .volume(volume)
+                .triggerPrice("STOP_LIMIT".equalsIgnoreCase(orderType) ? triggerPrice : null)
                 .state(state)
                 .build();
         
@@ -105,7 +111,7 @@ public class OrderService {
      * 지정가 매도 처리
      */
     @Transactional
-    public Order sellOrder(String userId, String market, BigDecimal price, BigDecimal volume, String orderType) {
+    public Order sellOrder(String userId, String market, BigDecimal price, BigDecimal volume, String orderType, BigDecimal triggerPrice) {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
@@ -122,7 +128,12 @@ public class OrderService {
         userAssetRepository.save(coinAsset);
 
         // 2. 체결 상태 결정
-        String state = "MARKET".equalsIgnoreCase(orderType) ? "DONE" : "PENDING";
+        String state = "PENDING";
+        if ("MARKET".equalsIgnoreCase(orderType)) {
+            state = "DONE";
+        } else if ("STOP_LIMIT".equalsIgnoreCase(orderType)) {
+            state = "WAITING_TRIGGER";
+        }
 
         // 3. 주문 내역 저장
         Order order = Order.builder()
@@ -132,6 +143,7 @@ public class OrderService {
                 .orderType(orderType)
                 .price(price)
                 .volume(volume)
+                .triggerPrice("STOP_LIMIT".equalsIgnoreCase(orderType) ? triggerPrice : null)
                 .state(state)
                 .build();
         
@@ -174,8 +186,8 @@ public class OrderService {
         if (!order.getUser().getUserId().equals(userId)) {
             throw new IllegalArgumentException("권한이 없습니다.");
         }
-        if (!"PENDING".equals(order.getState())) {
-            throw new IllegalStateException("미체결 상태의 주문만 취소할 수 있습니다.");
+        if (!"PENDING".equals(order.getState()) && !"WAITING_TRIGGER".equals(order.getState())) {
+            throw new IllegalStateException("미체결 또는 대기 상태의 주문만 취소할 수 있습니다.");
         }
 
         // 환불 처리

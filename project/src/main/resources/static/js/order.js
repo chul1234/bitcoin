@@ -75,12 +75,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (order.state === 'PENDING') {
                         stateText = '미체결(대기)';
                         stateColor = '#F59E0B'; // 주황색
+                    } else if (order.state === 'WAITING_TRIGGER') {
+                        stateText = '감시 대기중';
+                        stateColor = '#8B5CF6'; // 보라색
                     } else if (order.state === 'CANCELED') {
                         stateText = '취소됨';
                         stateColor = 'var(--text-muted)';
                     }
 
-                    const cancelButton = order.state === 'PENDING' 
+                    const cancelButton = (order.state === 'PENDING' || order.state === 'WAITING_TRIGGER')
                         ? `<button class="btn-cancel-order" data-id="${order.id}" style="margin-top:4px; padding:2px 8px; font-size:0.7rem; background:transparent; border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">주문 취소</button>` 
                         : '';
 
@@ -495,23 +498,37 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const volume = parseFloat(panel.querySelector('.amount-input').value);
         
+        let triggerPrice = null;
+        if (orderType === 'STOP_LIMIT') {
+            const triggerInput = panel.querySelector('.trigger-input');
+            triggerPrice = parseFloat(triggerInput.value.replace(/,/g, ''));
+            if (!triggerPrice || triggerPrice <= 0) {
+                return alert('감시가를 올바르게 입력해주세요.');
+            }
+        }
+
         if (!price || !volume || price <= 0 || volume <= 0) {
             return alert('가격과 수량을 올바르게 입력해주세요.');
         }
 
         try {
+            const payload = {
+                market: currentMarket,
+                price: price,
+                volume: volume,
+                orderType: orderType
+            };
+            if (triggerPrice) {
+                payload.triggerPrice = triggerPrice;
+            }
+
             const res = await fetch(`/api/orders/${type}`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
                     'X-User-Id': userId
                 },
-                body: JSON.stringify({
-                    market: currentMarket,
-                    price: price,
-                    volume: volume,
-                    orderType: orderType
-                })
+                body: JSON.stringify(payload)
             });
             const result = await res.json();
             

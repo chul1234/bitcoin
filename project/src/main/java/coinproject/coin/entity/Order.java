@@ -40,6 +40,9 @@ public class Order {
     @Column(precision = 30, scale = 8, nullable = false)
     private BigDecimal volume;
 
+    @Column(name = "trigger_price", precision = 30, scale = 8)
+    private BigDecimal triggerPrice;
+
     @Column(length = 20, nullable = false)
     @Builder.Default
     private String state = "WAIT"; // WAIT, DONE, CANCEL

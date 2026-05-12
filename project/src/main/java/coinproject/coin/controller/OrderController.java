@@ -28,13 +28,19 @@ public class OrderController {
             String orderType = (String) payload.getOrDefault("orderType", "LIMIT");
             BigDecimal price = new BigDecimal(payload.get("price").toString());
             BigDecimal volume = new BigDecimal(payload.get("volume").toString());
+            BigDecimal triggerPrice = payload.containsKey("triggerPrice") ? new BigDecimal(payload.get("triggerPrice").toString()) : null;
 
             if (price.compareTo(BigDecimal.ZERO) <= 0 || volume.compareTo(BigDecimal.ZERO) <= 0) {
                 return ResponseEntity.badRequest().body(Map.of("success", false, "message", "가격과 수량은 0보다 커야 합니다."));
             }
 
-            Order order = orderService.buyOrder(userIdHeader, market, price, volume, orderType);
-            String msg = "DONE".equals(order.getState()) ? "매수 주문이 즉시 체결되었습니다." : "매수 지정가 주문이 대기(PENDING) 상태로 등록되었습니다.";
+            Order order = orderService.buyOrder(userIdHeader, market, price, volume, orderType, triggerPrice);
+            String msg = "매수 주문이 즉시 체결되었습니다.";
+            if ("PENDING".equals(order.getState())) {
+                msg = "매수 지정가 주문이 대기(PENDING) 상태로 등록되었습니다.";
+            } else if ("WAITING_TRIGGER".equals(order.getState())) {
+                msg = "매수 예약-지정가 주문이 감시 대기(WAITING_TRIGGER) 상태로 등록되었습니다.";
+            }
             return ResponseEntity.ok(Map.of("success", true, "message", msg, "data", order));
         } catch (IllegalStateException e) {
             // 잔고 부족 등 비즈니스 로직 에러
@@ -56,13 +62,19 @@ public class OrderController {
             String orderType = (String) payload.getOrDefault("orderType", "LIMIT");
             BigDecimal price = new BigDecimal(payload.get("price").toString());
             BigDecimal volume = new BigDecimal(payload.get("volume").toString());
+            BigDecimal triggerPrice = payload.containsKey("triggerPrice") ? new BigDecimal(payload.get("triggerPrice").toString()) : null;
 
             if (price.compareTo(BigDecimal.ZERO) <= 0 || volume.compareTo(BigDecimal.ZERO) <= 0) {
                 return ResponseEntity.badRequest().body(Map.of("success", false, "message", "가격과 수량은 0보다 커야 합니다."));
             }
 
-            Order order = orderService.sellOrder(userIdHeader, market, price, volume, orderType);
-            String msg = "DONE".equals(order.getState()) ? "매도 주문이 즉시 체결되었습니다." : "매도 지정가 주문이 대기(PENDING) 상태로 등록되었습니다.";
+            Order order = orderService.sellOrder(userIdHeader, market, price, volume, orderType, triggerPrice);
+            String msg = "매도 주문이 즉시 체결되었습니다.";
+            if ("PENDING".equals(order.getState())) {
+                msg = "매도 지정가 주문이 대기(PENDING) 상태로 등록되었습니다.";
+            } else if ("WAITING_TRIGGER".equals(order.getState())) {
+                msg = "매도 예약-지정가 주문이 감시 대기(WAITING_TRIGGER) 상태로 등록되었습니다.";
+            }
             return ResponseEntity.ok(Map.of("success", true, "message", msg, "data", order));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
