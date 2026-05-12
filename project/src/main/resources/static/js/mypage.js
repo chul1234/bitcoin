@@ -20,6 +20,66 @@ document.addEventListener('DOMContentLoaded', () => {
     // 마이페이지 요약 정보 로딩
     if (profileName && profileUserid) {
         fetchUserInfo();
+        fetchMyAssets();
+    }
+
+    async function fetchMyAssets() {
+        try {
+            const res = await fetch('/api/assets', {
+                headers: { 'X-User-Id': loggedInUserId }
+            });
+            const result = await res.json();
+            
+            if (result.success && result.data) {
+                let krwBalance = 0;
+                let coinSymbols = new Set();
+                let assets = result.data;
+                
+                assets.forEach(a => {
+                    if (a.currency === 'KRW') {
+                        krwBalance += a.balance;
+                    } else {
+                        coinSymbols.add(`KRW-\${a.currency}`);
+                    }
+                });
+                
+                let currentPrices = {};
+                if (coinSymbols.size > 0) {
+                    const markets = Array.from(coinSymbols).join(',');
+                    try {
+                        const upbitRes = await fetch(`https://api.upbit.com/v1/ticker?markets=\${markets}`);
+                        const upbitData = await upbitRes.json();
+                        upbitData.forEach(item => {
+                            const currency = item.market.split('-')[1];
+                            currentPrices[currency] = item.trade_price;
+                        });
+                    } catch (e) {
+                        console.error("업비트 시세 로딩 실패", e);
+                    }
+                }
+                
+                let coinValuation = 0;
+                assets.forEach(a => {
+                    if (a.currency !== 'KRW') {
+                        const price = currentPrices[a.currency] || a.avgBuyPrice;
+                        coinValuation += (a.balance * price);
+                    }
+                });
+                
+                const totalAsset = krwBalance + coinValuation;
+                
+                const elTotal = document.getElementById('mypage-total-asset');
+                const elKrw = document.getElementById('mypage-available-krw');
+                const elCoin = document.getElementById('mypage-coin-asset');
+                
+                if(elTotal) elTotal.innerText = new Intl.NumberFormat('ko-KR').format(Math.floor(totalAsset));
+                if(elKrw) elKrw.innerText = new Intl.NumberFormat('ko-KR').format(Math.floor(krwBalance)) + ' KRW';
+                if(elCoin) elCoin.innerText = new Intl.NumberFormat('ko-KR').format(Math.floor(coinValuation)) + ' KRW';
+                
+            }
+        } catch (error) {
+            console.error('자산 정보 로드 실패:', error);
+        }
     }
 
     async function fetchUserInfo() {
