@@ -12,4 +12,5 @@ import java.util.Optional;
 public interface UserAssetRepository extends JpaRepository<UserAsset, Long> {
     List<UserAsset> findByUser(User user);
     Optional<UserAsset> findByUserAndCurrency(User user, String currency);
+    void deleteByUserAndCurrencyNot(User user, String currency);
 }

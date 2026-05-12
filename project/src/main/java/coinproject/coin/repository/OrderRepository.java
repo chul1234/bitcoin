@@ -11,4 +11,5 @@ import java.util.List;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByUserOrderByCreatedAtDesc(User user);
     List<Order> findByUserAndStateOrderByCreatedAtDesc(User user, String state);
+    void deleteByUser(User user);
 }

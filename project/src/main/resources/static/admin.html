@@ -50,6 +50,7 @@
                 <div class="admin-tabs">
                     <button class="admin-tab active" id="tab-user-list">사용자 목록</button>
                     <button class="admin-tab" id="tab-role-manage">권한 관리</button>
+                    <button class="admin-tab" id="tab-investment-manage">투자 관리</button>
                 </div>
 
                 <!-- 1. 사용자 목록 뷰 -->
@@ -131,6 +132,38 @@
                                 </td>
                                 <td style="text-align: right;">
                                     <button class="action-btn btn-edit" style="background: var(--accent-color); color: white;">변경사항 저장</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 3. 투자 관리 뷰 -->
+                <div id="view-investment-manage" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <p style="color: var(--text-muted); margin: 0;">모든 유저의 실시간 총 자산 및 수익률을 모니터링하고 1000만원으로 초기화할 수 있습니다.</p>
+                        <button id="btn-refresh-investment" class="primary-btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> 새로고침
+                        </button>
+                    </div>
+                    
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>유저ID</th>
+                                <th>이름</th>
+                                <th style="text-align: right;">보유 원화(KRW)</th>
+                                <th style="text-align: right;">코인 평가액</th>
+                                <th style="text-align: right;">총 자산</th>
+                                <th style="text-align: right;">수익률</th>
+                                <th style="text-align: center; width: 120px;">작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="investment-table-body">
+                            <!-- JS로 렌더링 -->
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                    투자 데이터를 불러오는 중입니다...
                                 </td>
                             </tr>
                         </tbody>

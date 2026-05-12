@@ -18,10 +18,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // 탭 및 뷰 요소
     const tabUserList = document.getElementById('tab-user-list');
     const tabRoleManage = document.getElementById('tab-role-manage');
+    const tabInvestmentManage = document.getElementById('tab-investment-manage'); // NEW
     
     const viewUserList = document.getElementById('view-user-list');
     const viewUserRegister = document.getElementById('view-user-register');
     const viewRoleManage = document.getElementById('view-role-manage');
+    const viewInvestmentManage = document.getElementById('view-investment-manage'); // NEW
     
     // 등록 폼 관련 요소
     const btnShowRegister = document.getElementById('btn-show-register');
@@ -36,17 +38,32 @@ document.addEventListener('DOMContentLoaded', () => {
     tabUserList.addEventListener('click', () => {
         tabUserList.classList.add('active');
         tabRoleManage.classList.remove('active');
+        tabInvestmentManage.classList.remove('active');
         viewUserList.style.display = 'block';
         viewUserRegister.style.display = 'none';
         viewRoleManage.style.display = 'none';
+        viewInvestmentManage.style.display = 'none';
     });
 
     tabRoleManage.addEventListener('click', () => {
         tabRoleManage.classList.add('active');
         tabUserList.classList.remove('active');
+        tabInvestmentManage.classList.remove('active');
         viewUserList.style.display = 'none';
         viewUserRegister.style.display = 'none';
         viewRoleManage.style.display = 'block';
+        viewInvestmentManage.style.display = 'none';
+    });
+
+    tabInvestmentManage.addEventListener('click', () => {
+        tabInvestmentManage.classList.add('active');
+        tabUserList.classList.remove('active');
+        tabRoleManage.classList.remove('active');
+        viewUserList.style.display = 'none';
+        viewUserRegister.style.display = 'none';
+        viewRoleManage.style.display = 'none';
+        viewInvestmentManage.style.display = 'block';
+        fetchInvestments(); // 탭 열릴 때 데이터 로드
     });
 
     // '새 사용자 등록' 버튼 클릭 시 뷰 전환 및 초기 폼 추가
@@ -359,12 +376,136 @@ document.addEventListener('DOMContentLoaded', () => {
                 viewUserList.style.display = 'block';
                 loadUsers(); // 목록 새로고침
             } else {
-                alert(result.message);
+                alert(result.message || '정보 수정에 실패했습니다.');
             }
-        } catch (error) {
-            alert('일괄 등록 중 오류가 발생했습니다.');
+        } catch(e) {
+            console.error(e);
+            alert('정보 수정 중 오류가 발생했습니다.');
         }
     });
+
+    // -----------------------------------------------------
+    // [투자 관리 탭 로직]
+    // -----------------------------------------------------
+    const btnRefreshInvestment = document.getElementById('btn-refresh-investment');
+    if (btnRefreshInvestment) {
+        btnRefreshInvestment.addEventListener('click', fetchInvestments);
+    }
+
+    async function fetchInvestments() {
+        const tbody = document.getElementById('investment-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">데이터를 불러오는 중입니다...</td></tr>`;
+
+        try {
+            const res = await fetch('/api/admin/investments');
+            const result = await res.json();
+            
+            if (result.success) {
+                renderInvestmentList(result.data);
+            } else {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--error-color);">데이터 로딩 실패</td></tr>`;
+            }
+        } catch (e) {
+            console.error('투자 데이터 로드 에러:', e);
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--error-color);">데이터 로딩 중 에러가 발생했습니다.</td></tr>`;
+        }
+    }
+
+    async function renderInvestmentList(users) {
+        const tbody = document.getElementById('investment-table-body');
+        
+        // 1. 모든 유저가 가진 코인 심볼 목록 추출
+        const coinSymbols = new Set();
+        users.forEach(u => {
+            if (u.assets) {
+                u.assets.forEach(a => {
+                    if (a.currency !== 'KRW') coinSymbols.add(`KRW-${a.currency}`);
+                });
+            }
+        });
+
+        // 2. 업비트에서 현재가 한 번에 가져오기
+        const currentPrices = {};
+        if (coinSymbols.size > 0) {
+            const markets = Array.from(coinSymbols).join(',');
+            try {
+                const upbitRes = await fetch(`https://api.upbit.com/v1/ticker?markets=${markets}`);
+                const upbitData = await upbitRes.json();
+                upbitData.forEach(item => {
+                    const currency = item.market.split('-')[1];
+                    currentPrices[currency] = item.trade_price;
+                });
+            } catch (e) {
+                console.error("업비트 시세 로딩 실패", e);
+            }
+        }
+
+        // 3. 렌더링
+        let html = '';
+        users.forEach(user => {
+            let krwBalance = 0;
+            let coinValuation = 0;
+
+            if (user.assets) {
+                user.assets.forEach(asset => {
+                    if (asset.currency === 'KRW') {
+                        krwBalance += asset.balance;
+                    } else {
+                        const price = currentPrices[asset.currency] || asset.avgBuyPrice;
+                        coinValuation += (asset.balance * price);
+                    }
+                });
+            }
+
+            const totalAsset = krwBalance + coinValuation;
+            const profitRate = ((totalAsset - 10000000) / 10000000) * 100;
+            const isProfit = profitRate > 0;
+            const isLoss = profitRate < 0;
+            const colorClass = isProfit ? 'profit' : (isLoss ? 'loss' : '');
+            const sign = isProfit ? '+' : '';
+
+            html += `
+                <tr>
+                    <td>${user.userId}</td>
+                    <td>${user.name}</td>
+                    <td style="text-align: right;">${new Intl.NumberFormat('ko-KR').format(Math.floor(krwBalance))}</td>
+                    <td style="text-align: right;">${new Intl.NumberFormat('ko-KR').format(Math.floor(coinValuation))}</td>
+                    <td style="text-align: right; font-weight:700;">${new Intl.NumberFormat('ko-KR').format(Math.floor(totalAsset))}</td>
+                    <td style="text-align: right; font-weight:700;" class="${colorClass}">${sign}${profitRate.toFixed(2)}%</td>
+                    <td style="text-align: center;">
+                        <button class="action-btn btn-reset-invest" data-uid="${user.userId}" style="background: rgba(239, 68, 68, 0.1); color: var(--error-color); border-color: rgba(239, 68, 68, 0.2);">1000만원 리셋</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+
+        // 4. 리셋 버튼 이벤트 바인딩
+        document.querySelectorAll('.btn-reset-invest').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const uid = e.target.getAttribute('data-uid');
+                if (confirm(`정말 [${uid}] 유저의 모든 코인과 주문을 삭제하고 1,000만원으로 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+                    try {
+                        const res = await fetch(`/api/admin/users/${uid}/reset-investment`, {
+                            method: 'POST'
+                        });
+                        const result = await res.json();
+                        if (result.success) {
+                            alert(result.message);
+                            fetchInvestments(); // 리로드
+                        } else {
+                            alert('초기화 실패: ' + result.message);
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert('초기화 요청 중 오류가 발생했습니다.');
+                    }
+                }
+            });
+        });
+    }
 
     // 초기 데이터 로드
     loadUsers();

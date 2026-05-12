@@ -18,6 +18,7 @@ public class AssetService {
 
     private final UserAssetRepository userAssetRepository;
     private final UserRepository userRepository;
+    private final coinproject.coin.repository.OrderRepository orderRepository;
 
     /**
      * 유저의 보유 자산 전체 목록을 조회합니다.
@@ -61,5 +62,36 @@ public class AssetService {
                 .build();
 
         return userAssetRepository.save(newAsset);
+    }
+
+    /**
+     * 유저의 투자 내역(주문 및 코인)을 삭제하고 KRW를 초기 금액으로 리셋합니다.
+     */
+    @Transactional
+    public void resetUserInvestment(String userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        // 1. 모든 주문 내역 삭제
+        orderRepository.deleteByUser(user);
+
+        // 2. 원화(KRW)를 제외한 모든 코인 자산 삭제
+        userAssetRepository.deleteByUserAndCurrencyNot(user, "KRW");
+
+        // 3. 원화(KRW) 자산 잔액을 1000만 원으로 복구 (없으면 생성)
+        Optional<UserAsset> krwWallet = userAssetRepository.findByUserAndCurrency(user, "KRW");
+        if (krwWallet.isPresent()) {
+            UserAsset asset = krwWallet.get();
+            asset.setBalance(new BigDecimal("10000000"));
+            userAssetRepository.save(asset);
+        } else {
+            UserAsset newAsset = UserAsset.builder()
+                    .user(user)
+                    .currency("KRW")
+                    .balance(new BigDecimal("10000000"))
+                    .avgBuyPrice(BigDecimal.ONE)
+                    .build();
+            userAssetRepository.save(newAsset);
+        }
     }
 }

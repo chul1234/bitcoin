@@ -67,4 +67,47 @@ public class AdminController {
         response.put("message", "권한이 성공적으로 변경되었습니다.");
         return ResponseEntity.ok(response);
     }
+
+    @Autowired
+    private coinproject.coin.service.AssetService assetService;
+
+    /**
+     * 모든 사용자의 투자(자산) 현황 조회
+     */
+    @GetMapping("/investments")
+    public ResponseEntity<Map<String, Object>> getAllInvestments() {
+        Map<String, Object> response = new HashMap<>();
+        List<Map<String, Object>> users = userService.getAllUsersWithRoles();
+        
+        for (Map<String, Object> userMap : users) {
+            String userId = (String) userMap.get("userId");
+            try {
+                userMap.put("assets", assetService.getUserAssets(userId));
+            } catch (Exception e) {
+                userMap.put("assets", List.of());
+            }
+        }
+        
+        response.put("success", true);
+        response.put("data", users);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 특정 사용자 투자 초기화 (1000만원 리셋)
+     */
+    @PostMapping("/users/{userId}/reset-investment")
+    public ResponseEntity<Map<String, Object>> resetUserInvestment(@PathVariable String userId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            assetService.resetUserInvestment(userId);
+            response.put("success", true);
+            response.put("message", "사용자의 투자가 1000만원으로 성공적으로 초기화되었습니다.");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "초기화 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
 }
