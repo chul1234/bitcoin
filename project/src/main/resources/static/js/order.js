@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         stateText = '미체결(대기)';
                         stateColor = '#F59E0B'; // 주황색
                     } else if (order.state === 'WAITING_TRIGGER') {
-                        stateText = '감시 대기중';
+                        stateText = '예약 대기중';
                         stateColor = '#8B5CF6'; // 보라색
                     } else if (order.state === 'CANCELED') {
                         stateText = '취소됨';
@@ -97,8 +97,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span style="color:var(--text-muted);">종목</span>
                                 <span style="color:var(--text-main); font-weight:500;">${order.market}</span>
                             </div>
+                            ${order.triggerPrice ? `
                             <div style="display:flex; justify-content:space-between; margin-bottom: 2px;">
-                                <span style="color:var(--text-muted);">단가</span>
+                                <span style="color:var(--text-muted);">예약가</span>
+                                <span style="color:#8B5CF6;">${new Intl.NumberFormat('ko-KR').format(order.triggerPrice)} KRW</span>
+                            </div>
+                            ` : ''}
+                            <div style="display:flex; justify-content:space-between; margin-bottom: 2px;">
+                                <span style="color:var(--text-muted);">주문단가</span>
                                 <span>${price} KRW</span>
                             </div>
                             <div style="display:flex; justify-content:space-between; align-items:flex-end;">
@@ -407,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 인풋 값 변경 시 콤마 자동 생성 및 총액 재계산
-    document.querySelectorAll('.price-input').forEach(input => {
+    document.querySelectorAll('.price-input, .trigger-input').forEach(input => {
         input.addEventListener('input', (e) => {
             // 숫자 이외의 문자 제거
             let rawValue = e.target.value.replace(/[^0-9]/g, '');
@@ -503,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const triggerInput = panel.querySelector('.trigger-input');
             triggerPrice = parseFloat(triggerInput.value.replace(/,/g, ''));
             if (!triggerPrice || triggerPrice <= 0) {
-                return alert('감시가를 올바르게 입력해주세요.');
+                return alert('예약가를 올바르게 입력해주세요.');
             }
         }
 
