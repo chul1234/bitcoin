@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTimeframe = 'minutes/1'; // 캔들 기준 시간 (기본 1분)
     let lastCandle = null; // 마지막 분봉 데이터를 추적하여 실시간 1분봉 OHLC를 직접 계산
     let isChartFrozen = false; // 차트 고정 상태 토글 플래그
+    let isAiModeEnabled = false; // AI 분석 위젯 및 캔들 토글 상태 플래그
 
     initDashboard();
 
@@ -358,6 +359,40 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tvFreezeBtn) tvFreezeBtn.addEventListener('click', toggleFreeze);
 
         // ==========================================================================
+        // AI 분석 모드 토글 기능 (과제 6 & 6-1)
+        // ==========================================================================
+        const tvAiToggleBtn = document.getElementById('tv-ai-toggle-btn');
+        
+        async function toggleAiMode() {
+            isAiModeEnabled = !isAiModeEnabled;
+            
+            if (tvAiToggleBtn) {
+                if (isAiModeEnabled) {
+                    tvAiToggleBtn.classList.add('active');
+                    tvAiToggleBtn.style.color = 'var(--accent-color)';
+                } else {
+                    tvAiToggleBtn.classList.remove('active');
+                    tvAiToggleBtn.style.color = 'var(--text-muted)';
+                }
+            }
+            
+            const briefingWidget = document.getElementById('ai-briefing-widget');
+            
+            if (isAiModeEnabled) {
+                // 켜졌을 때 즉시 현재 코인 기준으로 렌더링
+                if (lastCandle) {
+                    await renderAiPrediction(lastCandle);
+                }
+            } else {
+                // 꺼졌을 때 데이터 비우기 및 위젯 숨기기
+                if (aiPredictionSeries) aiPredictionSeries.setData([]);
+                if (briefingWidget) briefingWidget.style.display = 'none';
+            }
+        }
+        
+        if (tvAiToggleBtn) tvAiToggleBtn.addEventListener('click', toggleAiMode);
+
+        // ==========================================================================
         // 드로잉 기능 엔진 (캔버스 오버레이)
         // ==========================================================================
         const canvas = document.getElementById('drawing-canvas');
@@ -663,7 +698,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateLegendWithLastCandle();
                 
                 // --- [과제 6] AI 예측 가상 캔들 그리기 ---
-                await renderAiPrediction(lastCandle);
+                if (isAiModeEnabled) {
+                    await renderAiPrediction(lastCandle);
+                }
             }
         } catch (error) {
             console.error('차트 데이터 로드 실패:', error);
@@ -675,10 +712,22 @@ document.addEventListener('DOMContentLoaded', () => {
     async function renderAiPrediction(baseCandle) {
         if (!aiPredictionSeries || !baseCandle) return;
         
+        const briefingWidget = document.getElementById('ai-briefing-widget');
+        const briefingTheme = document.getElementById('briefing-theme');
+        const briefingSummary = document.getElementById('briefing-summary');
+        
         try {
             const response = await fetch(`/api/ai/score?market=${currentMarket}`);
+            
             if (!response.ok) {
-                aiPredictionSeries.setData([]); // 데이터 없으면 가상 캔들 지움
+                // 데이터가 없을 때 가상 캔들은 비우고 위젯은 "대기중"으로 표시
+                aiPredictionSeries.setData([]);
+                if (briefingWidget && briefingTheme && briefingSummary) {
+                    briefingTheme.innerHTML = '대기중';
+                    briefingTheme.style.background = 'rgba(255,255,255,0.1)';
+                    briefingSummary.innerText = '아직 수집된 AI 분석 데이터가 없습니다.\n스케줄러가 백그라운드에서 데이터를 수집 중입니다. (최대 33분 소요)';
+                    briefingWidget.style.display = 'flex';
+                }
                 return;
             }
             
@@ -723,9 +772,46 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             aiPredictionSeries.setData(fakeCandles);
+            
+            // [과제 6-1] AI 브리핑 위젯 화면 연동
+            if (briefingWidget && briefingTheme && briefingSummary) {
+                // 테마명 포맷팅 및 색상 설정
+                let themeText = '알 수 없음';
+                let themeColor = 'rgba(255,255,255,0.1)';
+                
+                if (aiData.theme === 'SAFE') {
+                    themeText = '🛡️ 안전 자산';
+                    themeColor = 'rgba(16, 185, 129, 0.2)'; // Green
+                } else if (aiData.theme === 'HIGH_RISK') {
+                    themeText = '🔥 하이리스크';
+                    themeColor = 'rgba(239, 68, 68, 0.2)'; // Red
+                } else if (aiData.theme === 'TRENDING') {
+                    themeText = '🚀 트렌딩';
+                    themeColor = 'rgba(59, 130, 246, 0.2)'; // Blue
+                }
+                
+                briefingTheme.innerHTML = themeText;
+                briefingTheme.style.background = themeColor;
+                
+                // 점수(Score) 배지에 포함
+                briefingTheme.innerHTML += ` <span style="margin-left:4px; opacity:0.8;">(${score}점)</span>`;
+                
+                // 요약 문구 설정
+                briefingSummary.innerText = aiData.summary || '분석 요약 내용이 없습니다.';
+                
+                // 위젯 표시
+                briefingWidget.style.display = 'flex';
+            }
+            
         } catch (e) {
             console.warn('AI 예측 데이터 로드 실패:', e);
             aiPredictionSeries.setData([]);
+            if (briefingWidget && briefingTheme && briefingSummary) {
+                briefingTheme.innerHTML = '에러';
+                briefingTheme.style.background = 'rgba(239, 68, 68, 0.2)';
+                briefingSummary.innerText = 'AI 서버와 통신 중 오류가 발생했습니다.';
+                briefingWidget.style.display = 'flex';
+            }
         }
     }
 
