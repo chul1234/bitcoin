@@ -92,23 +92,24 @@ document.addEventListener('DOMContentLoaded', () => {
             },
         });
 
+        // 1. AI 예측 가상 캔들 시리즈를 먼저 추가하여 실제 캔들 "뒤에(배경)" 그려지게 함 (Z-index 조정)
+        aiPredictionSeries = chart.addCandlestickSeries({
+            upColor: 'rgba(249, 115, 22, 0.4)',     // AI 상승 (오렌지, 투명도 40%)
+            downColor: 'rgba(139, 92, 246, 0.4)',   // AI 하락 (보라색, 투명도 40%)
+            borderVisible: false,
+            wickUpColor: 'rgba(249, 115, 22, 0.3)',
+            wickDownColor: 'rgba(139, 92, 246, 0.3)',
+            priceLineVisible: false, // 가상 캔들이 현재가 선을 방해하지 않도록
+            lastValueVisible: false,
+        });
+
+        // 2. 실제 캔들 시리즈를 나중에 추가하여 AI 예측 캔들 "앞에" 명확히 보이게 함
         candlestickSeries = chart.addCandlestickSeries({
             upColor: '#EF4444',     // 한국식 상승(빨강)
             downColor: '#4F46E5',   // 한국식 하락(파랑-인디고)
             borderVisible: false,
             wickUpColor: '#EF4444',
             wickDownColor: '#4F46E5',
-        });
-
-        // AI 예측 가상 캔들 시리즈 (오렌지/보라색)
-        aiPredictionSeries = chart.addCandlestickSeries({
-            upColor: '#F97316',     // AI 호재 예측 상승 (오렌지)
-            downColor: '#8B5CF6',   // AI 악재 예측 하락 (보라색)
-            borderVisible: false,
-            wickUpColor: '#F97316',
-            wickDownColor: '#8B5CF6',
-            priceLineVisible: false, // 가상 캔들이 현재가 선을 방해하지 않도록
-            lastValueVisible: false,
         });
 
         // 1. 하단 거래량(Volume) 시리즈 추가
