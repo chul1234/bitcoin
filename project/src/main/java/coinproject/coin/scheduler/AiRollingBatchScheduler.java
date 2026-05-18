@@ -31,7 +31,7 @@ public class AiRollingBatchScheduler {
     // 한 번에 처리할 코인 개수 (무료 한도를 고려하여 10개)
     private static final int CHUNK_SIZE = 10;
 
-    @Scheduled(fixedDelay = 60000) // 1분(60초)마다 실행
+    @Scheduled(fixedDelay = 180000) // 3분(180초)마다 실행 (Gemini 3.1 RPD 한도 방어)
     @Transactional
     public void analyzeCoinsRollingBatch() {
         // 1. 전체 마켓 목록 가져오기

@@ -21,7 +21,7 @@ public class GeminiService {
     private String geminiApiKey;
 
     // 사용할 모델 버전에 맞춘 구글 API 엔드포인트 URL
-    private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=";
+    private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=";
 
     private final RestTemplate restTemplate = new RestTemplate();
 
