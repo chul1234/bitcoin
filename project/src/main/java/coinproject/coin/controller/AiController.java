@@ -33,4 +33,14 @@ public class AiController {
         
         return ResponseEntity.ok(topCoins);
     }
+
+    /**
+     * 특정 마켓의 최신 AI 방향성 점수와 분석 결과를 가져옵니다. (예측 차트 그리기용)
+     */
+    @GetMapping("/score")
+    public ResponseEntity<AiCoinAnalysis> getScore(@RequestParam String market) {
+        return aiCoinAnalysisRepository.findByMarket(market)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 }

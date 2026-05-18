@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
        ========================================================================== */
     let chart = null;
     let candlestickSeries = null;
+    let aiPredictionSeries = null; // AI 예측 가상 캔들용 변수
     let volumeSeries = null;
     let ma15Series = null;
     let ma50Series = null;
@@ -96,6 +97,17 @@ document.addEventListener('DOMContentLoaded', () => {
             borderVisible: false,
             wickUpColor: '#EF4444',
             wickDownColor: '#4F46E5',
+        });
+
+        // AI 예측 가상 캔들 시리즈 (오렌지/보라색)
+        aiPredictionSeries = chart.addCandlestickSeries({
+            upColor: '#F97316',     // AI 호재 예측 상승 (오렌지)
+            downColor: '#8B5CF6',   // AI 악재 예측 하락 (보라색)
+            borderVisible: false,
+            wickUpColor: '#F97316',
+            wickDownColor: '#8B5CF6',
+            priceLineVisible: false, // 가상 캔들이 현재가 선을 방해하지 않도록
+            lastValueVisible: false,
         });
 
         // 1. 하단 거래량(Volume) 시리즈 추가
@@ -649,10 +661,71 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 객체 복사로 참조 분리
                 lastCandle = { ...formattedData[formattedData.length - 1] };
                 updateLegendWithLastCandle();
+                
+                // --- [과제 6] AI 예측 가상 캔들 그리기 ---
+                await renderAiPrediction(lastCandle);
             }
         } catch (error) {
             console.error('차트 데이터 로드 실패:', error);
             document.getElementById('live-price').innerText = '데이터 오류';
+        }
+    }
+
+    // AI 방향성 점수를 기반으로 미래 가상 캔들 생성
+    async function renderAiPrediction(baseCandle) {
+        if (!aiPredictionSeries || !baseCandle) return;
+        
+        try {
+            const response = await fetch(`/api/ai/score?market=${currentMarket}`);
+            if (!response.ok) {
+                aiPredictionSeries.setData([]); // 데이터 없으면 가상 캔들 지움
+                return;
+            }
+            
+            const aiData = await response.json();
+            const score = aiData.score || 50;
+            
+            // 1분봉 기준으로 10개의 가상 캔들 생성
+            const fakeCandles = [];
+            let currentPrice = baseCandle.close;
+            let currentTime = baseCandle.time;
+            
+            // 점수에 따른 변동률 계수 (100점이면 가파르게 오르고, 0점이면 가파르게 내림)
+            const trendFactor = (score - 50) / 50; // -1.0 ~ 1.0
+            
+            // 코인 가격대에 따른 기본 변동폭 (예: 1% 기준)
+            const baseVolatility = currentPrice * 0.002; 
+            
+            for (let i = 1; i <= 10; i++) {
+                // 시간은 1분(60초)씩 증가
+                currentTime += 60;
+                
+                // 가상의 노이즈(랜덤 변동) 추가
+                const noise = (Math.random() - 0.5) * baseVolatility;
+                
+                // 트렌드 적용
+                const trendStep = trendFactor * baseVolatility * (Math.random() * 0.5 + 0.5);
+                
+                const open = currentPrice;
+                const close = open + trendStep + noise;
+                const high = Math.max(open, close) + Math.abs(noise * Math.random());
+                const low = Math.min(open, close) - Math.abs(noise * Math.random());
+                
+                fakeCandles.push({
+                    time: currentTime,
+                    open: open,
+                    high: high,
+                    low: low,
+                    close: close
+                });
+                
+                currentPrice = close;
+            }
+            
+            aiPredictionSeries.setData(fakeCandles);
+        } catch (e) {
+            console.warn('AI 예측 데이터 로드 실패:', e);
+            aiPredictionSeries.setData([]);
         }
     }
 
