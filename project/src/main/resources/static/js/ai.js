@@ -134,6 +134,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.changeOrderMarket(market);
                     }
                 }
+                
+                // 사용자가 AI 추천을 통해 코인을 띄웠으므로, 자동으로 차트의 AI 분석 모드를 켭니다.
+                if (typeof window.enableAiMode === 'function') {
+                    // 약간의 딜레이를 주어 차트 데이터가 갱신될 시간을 벌어줍니다.
+                    setTimeout(() => window.enableAiMode(), 300);
+                }
             });
         });
     }

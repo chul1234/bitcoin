@@ -391,6 +391,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (tvAiToggleBtn) tvAiToggleBtn.addEventListener('click', toggleAiMode);
+        
+        // 외부 모듈(ai.js 등)에서 AI 모드를 강제로 켜기 위한 전역 함수
+        window.enableAiMode = async function() {
+            if (!isAiModeEnabled) {
+                isAiModeEnabled = true;
+                if (tvAiToggleBtn) {
+                    tvAiToggleBtn.classList.add('active');
+                    tvAiToggleBtn.style.color = 'var(--accent-color)';
+                }
+                if (lastCandle) {
+                    await renderAiPrediction(lastCandle);
+                }
+            }
+        };
 
         // ==========================================================================
         // 드로잉 기능 엔진 (캔버스 오버레이)
