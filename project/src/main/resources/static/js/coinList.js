@@ -86,9 +86,16 @@ document.addEventListener('DOMContentLoaded', () => {
             el.dataset.market = coin.market;
             el.dataset.name = coin.korean_name;
             
-            // 비트코인(KRW-BTC)을 기본 활성화 상태로 표시
-            if (coin.market === 'KRW-BTC') {
+            // URL 파라미터에서 선택된 코인 확인 (없으면 비트코인 기본값)
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetMarket = urlParams.get('market') || 'KRW-BTC';
+            
+            // 해당 코인을 활성화 상태로 표시하고 스크롤 이동
+            if (coin.market === targetMarket) {
                 el.classList.add('active');
+                setTimeout(() => {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
             }
 
             el.innerHTML = `

@@ -82,3 +82,36 @@ document.addEventListener('DOMContentLoaded', () => {
     // 페이지 로드 시 자산 확인 실행
     checkAndInitializeAssets();
 });
+
+/**
+ * 전역 토스트 알림창 (Toast UI)
+ * @param {string} message - 표시할 메시지
+ * @param {string} type - 'success', 'error', 'info'
+ */
+window.showToast = function(message, type = 'info') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    let icon = 'ℹ️';
+    if (type === 'success') icon = '✅';
+    else if (type === 'error') icon = '❌';
+
+    toast.innerHTML = `<span class="toast-icon">${icon}</span> <span>${message}</span>`;
+    container.appendChild(toast);
+    
+    // 약간의 딜레이 후 애니메이션 클래스 추가 (Slide in)
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // 3초 후 애니메이션 클래스 제거 및 요소 삭제
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300); // CSS 트랜지션 시간에 맞춰 제거
+    }, 3000);
+};

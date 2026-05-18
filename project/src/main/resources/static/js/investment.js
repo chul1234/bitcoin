@@ -150,7 +150,10 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (pnl < 0) { color = '#3B82F6'; }
 
             html += `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;" 
+                    onclick="window.location.href='dashboard.html?market=KRW-${currency}'"
+                    onmouseover="this.style.backgroundColor='rgba(255,255,255,0.05)'" 
+                    onmouseout="this.style.backgroundColor='transparent'">
                     <td style="padding: 1.2rem 0.5rem; text-align: left; display:flex; align-items:center; gap:0.8rem;">
                         <div style="width: 32px; height: 32px; background: ${meta.color}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; color: #fff;">${meta.initial}</div>
                         <div>

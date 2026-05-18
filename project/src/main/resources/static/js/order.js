@@ -448,11 +448,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const krwBalance = parseFloat(krwText) || 0;
 
             if (!price || price <= 0) {
-                return alert('먼저 호가창에서 매수할 가격을 클릭하거나 입력해주세요.');
+                if(window.showToast) window.showToast('먼저 호가창에서 매수할 가격을 클릭하거나 입력해주세요.', 'error');
+                return;
             }
 
+            // 수수료 0.05%를 고려하여 실제 사용 가능한 KRW 계산 (100% 매수 시 잔고 부족 방지)
+            const FEE_RATE = 0.0005;
             const targetKrw = krwBalance * (percent / 100);
-            const amount = targetKrw / price;
+            const usableKrw = targetKrw / (1 + FEE_RATE);
+            const amount = usableKrw / price;
             
             document.querySelector('#buy-panel .amount-input').value = amount.toFixed(8);
             calcTotal('#buy-panel');
@@ -472,7 +476,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const coinBalance = parseFloat(coinText) || 0;
 
             if (coinBalance <= 0) {
-                return alert('매도할 수 있는 보유 코인이 없습니다.');
+                if(window.showToast) window.showToast('매도할 수 있는 보유 코인이 없습니다.', 'error');
+                return;
             }
 
             const targetAmount = coinBalance * (percent / 100);
@@ -485,7 +490,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 백엔드 API 통신 함수 (매수/매도 공통)
     async function submitOrder(type) {
         const userId = sessionStorage.getItem('loggedInUserId');
-        if (!userId) return alert('로그인이 필요합니다.');
+        if (!userId) {
+            if(window.showToast) window.showToast('로그인이 필요합니다.', 'error');
+            return;
+        }
 
         const panelId = type === 'buy' ? '#buy-panel' : '#sell-panel';
         const panel = document.querySelector(panelId);
@@ -509,12 +517,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const triggerInput = panel.querySelector('.trigger-input');
             triggerPrice = parseFloat(triggerInput.value.replace(/,/g, ''));
             if (!triggerPrice || triggerPrice <= 0) {
-                return alert('예약가를 올바르게 입력해주세요.');
+                if(window.showToast) window.showToast('예약가를 올바르게 입력해주세요.', 'error');
+                return;
             }
         }
 
         if (!price || !volume || price <= 0 || volume <= 0) {
-            return alert('가격과 수량을 올바르게 입력해주세요.');
+            if(window.showToast) window.showToast('가격과 수량을 올바르게 입력해주세요.', 'error');
+            return;
         }
 
         try {
@@ -539,14 +549,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await res.json();
             
             if (result.success) {
-                alert(`${type === 'buy' ? '매수' : '매도'}가 체결되었습니다!`);
-                // 내 잔고 갱신을 위해 페이지 리로드 (또는 checkAndInitializeAssets 재호출)
-                window.location.reload(); 
+                if(window.showToast) window.showToast(`${type === 'buy' ? '매수' : '매도'}가 체결되었습니다!`, 'success');
+                // 내 잔고 갱신을 위해 페이지 리로드 (UX 강화를 위해 토스트 알림을 볼 수 있도록 약간의 딜레이 부여)
+                setTimeout(() => window.location.reload(), 1500); 
             } else {
-                alert('주문 실패: ' + result.message);
+                if(window.showToast) window.showToast('주문 실패: ' + result.message, 'error');
             }
         } catch (e) {
-            alert('서버 오류가 발생했습니다.');
+            if(window.showToast) window.showToast('서버 오류가 발생했습니다.', 'error');
         }
     }
 
