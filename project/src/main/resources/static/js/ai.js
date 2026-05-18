@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (!data || data.length === 0) {
-                recommendList.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">아직 수집된 AI 분석 데이터가 없습니다.<br>스케줄러가 백그라운드에서 데이터를 수집 중입니다. (최대 11분 소요)</div>';
+                recommendList.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">아직 수집된 AI 분석 데이터가 없습니다.<br>스케줄러가 백그라운드에서 데이터를 수집 중입니다. (최대 9분 소요)</div>';
                 return;
             }
 

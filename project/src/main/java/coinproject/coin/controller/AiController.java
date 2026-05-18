@@ -23,15 +23,15 @@ public class AiController {
      */
     @GetMapping("/recommendations")
     public ResponseEntity<List<AiCoinAnalysis>> getRecommendations(@RequestParam(defaultValue = "SAFE") String theme) {
-        // 테마에 맞는 코인을 점수가 높은 순으로 가져옵니다.
-        List<AiCoinAnalysis> topCoins = aiCoinAnalysisRepository.findByThemeOrderByScoreDesc(theme);
+        // 테마에 맞는 코인을 점수가 높은 순으로 모두 가져옵니다.
+        List<AiCoinAnalysis> allThemeCoins = aiCoinAnalysisRepository.findByThemeOrderByScoreDesc(theme);
         
-        // 최대 3개까지만 리턴
-        if (topCoins.size() > 3) {
-            topCoins = topCoins.subList(0, 3);
+        // 사용자 요청에 따라 가장 점수가 높은 상위 3개만 잘라서 반환합니다. (랜덤 셔플 제거)
+        if (allThemeCoins.size() > 3) {
+            allThemeCoins = allThemeCoins.subList(0, 3);
         }
         
-        return ResponseEntity.ok(topCoins);
+        return ResponseEntity.ok(allThemeCoins);
     }
 
     /**

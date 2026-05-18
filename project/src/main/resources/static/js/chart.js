@@ -739,7 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (briefingWidget && briefingTheme && briefingSummary) {
                     briefingTheme.innerHTML = '대기중';
                     briefingTheme.style.background = 'rgba(255,255,255,0.1)';
-                    briefingSummary.innerText = '아직 수집된 AI 분석 데이터가 없습니다.\n스케줄러가 백그라운드에서 데이터를 수집 중입니다. (최대 33분 소요)';
+                    briefingSummary.innerText = '아직 수집된 AI 분석 데이터가 없습니다.\n스케줄러가 백그라운드에서 데이터를 수집 중입니다. (최대 9분 소요)';
                     briefingWidget.style.display = 'flex';
                 }
                 return;
