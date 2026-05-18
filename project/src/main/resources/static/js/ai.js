@@ -12,6 +12,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // 모달 열기
     aiBtn.addEventListener('click', () => {
         aiModal.style.display = 'flex';
+        
+        // 탭 UI 강제 초기화 (안전 자산으로 맞춤)
+        tabs.forEach(t => {
+            t.classList.remove('active');
+            t.style.borderBottom = 'none';
+            t.style.color = 'var(--text-muted)';
+            if (t.dataset.theme === 'SAFE') {
+                t.classList.add('active');
+                t.style.borderBottom = '2px solid #8B5CF6';
+                t.style.color = 'var(--text-main)';
+            }
+        });
+        
         // 기본 탭 로드
         loadRecommendations('SAFE');
     });
