@@ -109,16 +109,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 const market = e.target.dataset.market;
                 aiModal.style.display = 'none'; // 모달 닫기
                 
-                // 전역 스코프에 있는 selectCoin 호출 (coinlist.js 또는 order.js에 존재한다고 가정)
-                if (typeof window.selectCoin === 'function') {
-                    window.selectCoin(market);
-                } else if (typeof window.switchMarket === 'function') {
-                    window.switchMarket(market);
+                // 좌측 코인 리스트에서 해당 코인 항목을 찾아 클릭 이벤트를 트리거합니다.
+                const coinItem = document.querySelector(`.coin-item[data-market="${market}"]`);
+                if (coinItem) {
+                    coinItem.click(); // 리스트 클릭 시 차트와 주문창이 모두 갱신됩니다.
+                    
+                    // 좌측 패널 스크롤 이동
+                    coinItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // (선택 사항) 좌측 검색창에 코인 이름을 자동 입력하여 한눈에 보이게 만듭니다.
+                    const searchInput = document.getElementById('coin-search-input');
+                    if (searchInput) {
+                        // "KRW-" 부분을 제외한 심볼(BTC, ETH 등)로 검색
+                        searchInput.value = market.replace('KRW-', '');
+                        // input 이벤트 강제 발생 (검색 로직 실행)
+                        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
                 } else {
-                    console.warn('전역 코인 선택 함수를 찾을 수 없습니다.');
-                    // 임시 방편으로 강제 이벤트 트리거
-                    const event = new CustomEvent('marketChanged', { detail: { market: market } });
-                    document.dispatchEvent(event);
+                    // 리스트에 없는 경우 (거의 발생하지 않음) 직접 함수 호출
+                    if (typeof window.changeMarket === 'function') {
+                        window.changeMarket(market, market);
+                    }
+                    if (typeof window.changeOrderMarket === 'function') {
+                        window.changeOrderMarket(market);
+                    }
                 }
             });
         });

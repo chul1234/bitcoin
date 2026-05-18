@@ -839,11 +839,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         currentMarket = marketCode;
         
-        // 1. 차트 헤더 정보 업데이트
-        const nameEl = document.getElementById('display-coin-name');
-        const symEl = document.getElementById('display-coin-symbol');
-        if (nameEl) nameEl.innerText = koreanName;
-        if (symEl) symEl.innerText = marketCode;
+        // 1. 차트 내부 레전드 정보 업데이트
+        const legendTitle = document.getElementById('legend-title');
+        const legendTf = document.getElementById('legend-tf');
+        if (legendTitle) {
+            const tfText = legendTf ? legendTf.innerText : '1분';
+            legendTitle.innerHTML = `${koreanName} (${marketCode}) <span id="legend-tf">${tfText}</span>`;
+        }
         
         // 2. 차트 기존 데이터 비우기 (로딩 체감)
         candlestickSeries.setData([]);
