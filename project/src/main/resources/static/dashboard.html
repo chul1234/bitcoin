@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -232,8 +232,12 @@
                 
                 <!-- 우측 매수/매도 시스템 패널 -->
                 <aside class="order-panel">
-                    <div class="panel-header">
+                    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
                         <h2>주문 (Order)</h2>
+                        <button id="ai-recommend-btn" class="ai-sparkle-btn" style="background: linear-gradient(135deg, #8B5CF6, #3B82F6); color: white; border: none; padding: 6px 12px; border-radius: 20px; font-weight: 600; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); transition: transform 0.2s;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                            AI 추천
+                        </button>
                     </div>
                     
                     <div class="order-type-tabs" id="order-tabs">
@@ -395,10 +399,41 @@
         </div>
     </div>
 
+    <!-- AI 추천 모달 -->
+    <div id="ai-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="ai-modal-content" style="background: var(--bg-card); width: 600px; max-width: 90%; border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+            
+            <div class="ai-modal-header" style="padding: 1.5rem; background: rgba(139, 92, 246, 0.1); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; display: flex; align-items: center; gap: 8px; color: #E2E8F0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                    AI 포트폴리오 큐레이션
+                </h3>
+                <button id="close-ai-modal" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem;">&times;</button>
+            </div>
+
+            <div class="ai-theme-tabs" style="display: flex; border-bottom: 1px solid var(--border-color); background: var(--bg-main);">
+                <div class="ai-tab active" data-theme="SAFE" style="flex: 1; text-align: center; padding: 1rem; cursor: pointer; color: var(--text-main); border-bottom: 2px solid #8B5CF6; font-weight: 600;">🛡️ 안전 자산</div>
+                <div class="ai-tab" data-theme="HIGH_RISK" style="flex: 1; text-align: center; padding: 1rem; cursor: pointer; color: var(--text-muted); font-weight: 600;">🔥 하이리스크</div>
+                <div class="ai-tab" data-theme="TRENDING" style="flex: 1; text-align: center; padding: 1rem; cursor: pointer; color: var(--text-muted); font-weight: 600;">🚀 트렌딩</div>
+            </div>
+
+            <div id="ai-recommend-list" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; max-height: 400px; overflow-y: auto;">
+                <!-- AI 추천 카드들이 여기에 동적으로 렌더링됩니다 -->
+                <div style="text-align: center; color: var(--text-muted); padding: 2rem;">AI 엔진이 데이터를 분석 중입니다...</div>
+            </div>
+            
+            <div class="ai-modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background: var(--bg-main); text-align: right; font-size: 0.8rem; color: var(--text-muted);">
+                Powered by Gemini 1.5 Flash ⚡
+            </div>
+        </div>
+    </div>
+
     <!-- 차트, 코인리스트, 주문 컨트롤 로직 연결 -->
     <script src="js/common.js"></script>
     <script src="js/chart.js?v=4"></script>
     <script src="js/coinList.js?v=1"></script>
     <script src="js/order.js?v=1"></script>
+    <!-- AI 큐레이션 연결 -->
+    <script src="js/ai.js"></script>
 </body>
 </html>

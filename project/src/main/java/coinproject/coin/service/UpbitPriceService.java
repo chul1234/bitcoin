@@ -48,4 +48,24 @@ public class UpbitPriceService {
 
         return prices;
     }
+    /**
+     * 업비트에 상장된 모든 원화(KRW) 마켓 목록을 조회합니다.
+     */
+    public List<String> getAllKrwMarkets() {
+        try {
+            String url = "https://api.upbit.com/v1/market/all?isDetails=false";
+            ResponseEntity<List> response = restTemplate.getForEntity(url, List.class);
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                List<Map<String, Object>> responseBody = response.getBody();
+                return responseBody.stream()
+                        .map(item -> (String) item.get("market"))
+                        .filter(market -> market.startsWith("KRW-"))
+                        .collect(java.util.stream.Collectors.toList());
+            }
+        } catch (Exception e) {
+            System.err.println("업비트 마켓 목록 조회 오류: " + e.getMessage());
+        }
+        return java.util.Collections.emptyList();
+    }
 }
