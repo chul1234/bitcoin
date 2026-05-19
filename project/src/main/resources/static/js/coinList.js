@@ -90,10 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const targetMarket = urlParams.get('market') || 'KRW-BTC';
             
-            // 해당 코인을 활성화 상태로 표시하고 스크롤 이동
+            // 해당 코인을 활성화 상태로 표시하고 스크롤 이동 및 클릭(차트 연동)
             if (coin.market === targetMarket) {
-                el.classList.add('active');
+                // DOM 렌더링이 완료된 후 클릭 이벤트를 강제로 발생시킵니다.
                 setTimeout(() => {
+                    el.click();
                     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 300);
             }
