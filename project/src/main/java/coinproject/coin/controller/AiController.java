@@ -1,8 +1,10 @@
 package coinproject.coin.controller;
 
+// IDE 새로고침 강제 트리거 주석
+
 import coinproject.coin.entity.AiCoinAnalysis;
 import coinproject.coin.repository.AiCoinAnalysisRepository;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,10 +15,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/ai")
-@RequiredArgsConstructor
+
 public class AiController {
 
     private final AiCoinAnalysisRepository aiCoinAnalysisRepository;
+
+    public AiController(AiCoinAnalysisRepository aiCoinAnalysisRepository) {
+        this.aiCoinAnalysisRepository = aiCoinAnalysisRepository;
+    }
 
     /**
      * 특정 테마(SAFE, HIGH_RISK, TRENDING)의 AI 분석 결과를 점수(Score) 내림차순으로 3개 가져옵니다.

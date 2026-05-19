@@ -34,19 +34,43 @@ document.addEventListener('DOMContentLoaded', () => {
         gridContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem; grid-column: span 2;">AI 엔진이 전 종목을 스캔하고 있습니다... <br><small>잠시만 기다려주세요 ⚡</small></div>';
         
         try {
+            const userId = sessionStorage.getItem('loggedInUserId');
+            let botConfig = { isActive: false, tradeTheme: null };
+            
+            if (userId) {
+                try {
+                    const confRes = await fetch(`/api/ai/bot/config`, { headers: { 'X-User-Id': userId } });
+                    if (confRes.ok) botConfig = await confRes.json();
+                } catch(e) { console.error('Bot config fetch error', e); }
+            }
+
             const response = await fetch(`/api/ai/portfolios`);
             if (!response.ok) throw new Error('API 연동 실패');
             const data = await response.json(); // Map<String, List<AiCoinAnalysis>>
 
-            renderGrid(data);
+            renderGrid(data, botConfig);
         } catch (error) {
             console.error('AI 데이터 로드 에러:', error);
             gridContainer.innerHTML = '<div style="text-align: center; color: #EF4444; padding: 2rem; grid-column: span 2;">데이터를 불러오는 중 오류가 발생했습니다.</div>';
         }
     }
 
-    function renderGrid(portfolios) {
+    function renderGrid(portfolios, botConfig) {
         gridContainer.innerHTML = ''; 
+
+        // 펄스 애니메이션 추가용 스타일
+        if (!document.getElementById('pulse-style')) {
+            const style = document.createElement('style');
+            style.id = 'pulse-style';
+            style.innerHTML = `
+                @keyframes pulse-red {
+                    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+                    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+                    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
 
         Object.keys(themeMeta).forEach(themeKey => {
             const meta = themeMeta[themeKey];
@@ -84,6 +108,18 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // dataset에 시장 배열 저장 (문자열로)
             const marketsAttr = marketList.join(',');
+            
+            const isBotActiveForThisTheme = botConfig && botConfig.isActive && botConfig.tradeTheme === themeKey;
+            const buttonHtml = isBotActiveForThisTheme ? 
+                `<button class="btn-portfolio-buy" data-theme="${themeKey}" data-active="true"
+                        style="width:100%; background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; animation: pulse-red 2s infinite;">
+                    🔥 AI 자동매매 가동 중 (클릭 시 중지)
+                </button>` 
+                :
+                `<button class="btn-portfolio-buy" data-theme="${themeKey}" data-active="false"
+                        style="width:100%; background: linear-gradient(135deg, #8B5CF6, #3B82F6); color: white; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);">
+                    🤖 이 테마로 24시간 자동매매 가동
+                </button>`;
 
             const card = document.createElement('div');
             card.style.cssText = `background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden;`;
@@ -98,11 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${coinsHtml}
                 </div>
                 <div style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05); text-align:center;">
-                    <button class="btn-portfolio-buy" data-theme="${themeKey}" data-markets="${marketsAttr}" 
-                            ${coins.length === 0 ? 'disabled' : ''}
-                            style="width:100%; background: linear-gradient(135deg, #8B5CF6, #3B82F6); color: white; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: ${coins.length === 0 ? 'not-allowed' : 'pointer'}; opacity: ${coins.length === 0 ? '0.5' : '1'}; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);">
-                        예산 100% 자동 분산 매수
-                    </button>
+                    ${buttonHtml}
                 </div>
             `;
             gridContainer.appendChild(card);
@@ -135,100 +167,55 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // 분산 매수 버튼 이벤트
+        // 봇 토글 버튼 이벤트
         document.querySelectorAll('.btn-portfolio-buy').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                const marketsStr = e.currentTarget.dataset.markets;
-                if (!marketsStr) return;
-                
-                const markets = marketsStr.split(',');
-                if (markets.length === 0) return;
-                
                 const userId = sessionStorage.getItem('loggedInUserId');
                 if (!userId) {
                     if (window.showToast) window.showToast("로그인이 필요합니다.", "error");
                     return;
                 }
                 
-                // 예산 분할을 위해 잔고 조회 (API 요청 또는 HTML 요소에서 읽기)
-                let budget = 0;
+                const themeKey = e.currentTarget.dataset.theme;
+                const isActive = e.currentTarget.dataset.active === 'true';
+                const wantToActivate = !isActive;
+                
+                if (wantToActivate) {
+                    const titleRaw = themeMeta[themeKey].title;
+                    const cleanTitle = titleRaw.replace(/[^가-힣a-zA-Z\s]/g, '').trim();
+                    if (!confirm(`[${cleanTitle}] 테마로 24시간 AI 자동매매 봇을 가동하시겠습니까?\n\n- 1분마다 수익(+5%) 익절 및 악재(<40점) 손절을 자동으로 진행합니다.\n- 해당 테마의 최상위 코인을 일정 예산으로 자동 매수합니다.\n- 다른 테마가 이미 켜져있다면 이 테마로 교체됩니다.`)) {
+                        return;
+                    }
+                } else {
+                    if (!confirm('🛑 AI 자동매매 봇 가동을 중지하시겠습니까?\n(더 이상 알아서 매매하지 않습니다)')) {
+                        return;
+                    }
+                }
+                
                 try {
-                    const res = await fetch(`/api/assets/krw`, { headers: { 'X-User-Id': userId } });
+                    const res = await fetch(`/api/ai/bot/toggle`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-User-Id': userId
+                        },
+                        body: JSON.stringify({ theme: themeKey, activate: wantToActivate })
+                    });
+                    
                     if (res.ok) {
-                        const json = await res.json();
-                        budget = parseFloat(json.data.balance || 0);
-                    }
-                } catch(err) { console.error(err); }
-
-                if (budget < 5000 * markets.length) {
-                    if (window.showToast) window.showToast("보유 KRW 잔고가 부족합니다.", "error");
-                    return;
-                }
-
-                if (!confirm(`이 테마의 코인 ${markets.length}종목에 대해 보유 예산 100%를 N등분하여 분산 투자하시겠습니까?\n(현재 시세로 즉시 매수됩니다)`)) {
-                    return;
-                }
-                
-                aiModal.style.display = 'none';
-                if (window.showToast) window.showToast("🤖 AI가 포트폴리오 분산 매수를 시작합니다...", "success");
-
-                // 수수료 0.05% 감안하여 주문 가능 총액 계산 후 1/N
-                const feeRate = 0.0005;
-                const netBudget = Math.floor(budget / (1 + feeRate));
-                const budgetPerCoin = Math.floor(netBudget / markets.length);
-
-                let successCount = 0;
-                let failCount = 0;
-
-                // 병렬 매수 API 요청
-                const promises = markets.map(async (market) => {
-                    try {
-                        const tickerRes = await fetch(`https://api.upbit.com/v1/ticker?markets=${market}`);
-                        const tickerData = await tickerRes.json();
-                        const currentPrice = tickerData[0].trade_price;
-                        
-                        const volume = (budgetPerCoin / currentPrice).toFixed(8);
-
-                        const buyRes = await fetch('/api/orders/buy', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-User-Id': userId
-                            },
-                            body: JSON.stringify({
-                                market: market,
-                                price: currentPrice,
-                                volume: volume,
-                                orderType: 'MARKET'
-                            })
-                        });
-                        
-                        if (buyRes.ok) {
-                            successCount++;
+                        const result = await res.json();
+                        if (result.isActive) {
+                            if (window.showToast) window.showToast("🚀 AI 자동매매 봇이 가동되었습니다!", "success");
                         } else {
-                            failCount++;
+                            if (window.showToast) window.showToast("🛑 AI 봇 가동이 중지되었습니다.", "success");
                         }
-                    } catch (e) {
-                        failCount++;
-                        console.error(market, e);
+                        // UI 새로고침하여 버튼 상태 업데이트
+                        loadPortfolios();
                     }
-                });
-
-                await Promise.all(promises);
-
-                if (window.showToast) {
-                    window.showToast(`포트폴리오 매수 완료!\n(체결: ${successCount}건, 실패: ${failCount}건)`, successCount > 0 ? "success" : "error");
+                } catch(err) {
+                    console.error(err);
+                    if (window.showToast) window.showToast("오류가 발생했습니다.", "error");
                 }
-                
-                // 잔고 및 내역 갱신 트리거
-                if (window.fetchUserAsset) window.fetchUserAsset();
-                
-                // 투자내역 탭으로 자동 이동 유도
-                setTimeout(() => {
-                    if (confirm('매수가 완료되었습니다. 투자내역을 확인하시겠습니까?')) {
-                        window.location.href = 'investment.html';
-                    }
-                }, 1000);
             });
         });
     }
