@@ -17,13 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 marketTabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 
-                const target = tab.getAttribute('data-target');
-                if (target === 'krw-market-list') {
-                    listContainer.style.display = 'block';
-                    favContainer.style.display = 'none';
-                } else {
-                    listContainer.style.display = 'none';
-                    favContainer.style.display = 'block';
+                if (window.filterCoinList) {
+                    window.filterCoinList();
                 }
             });
         });
@@ -40,28 +35,56 @@ document.addEventListener('DOMContentLoaded', () => {
             // 2. KRW(원화) 마켓만 필터링
             coinMarkets = data.filter(item => item.market.startsWith('KRW-'));
             
+            // + 즐겨찾기 목록 가져오기
+            const userId = sessionStorage.getItem('loggedInUserId');
+            if (userId) {
+                try {
+                    const favRes = await fetch(`/api/favorites?userId=${userId}`);
+                    const favResult = await favRes.json();
+                    if (favResult.success) {
+                        window.favoriteMarkets = favResult.data;
+                    }
+                } catch(e) {}
+            }
+            if (!window.favoriteMarkets) window.favoriteMarkets = [];
+            
             // 3. 초기 목록 UI 렌더링
             renderCoinList();
 
             // 3.5. 검색 기능 이벤트 등록
             const searchInput = document.getElementById('coin-search-input');
             if (searchInput) {
-                searchInput.addEventListener('input', (e) => {
-                    const query = e.target.value.toLowerCase();
-                    const items = document.querySelectorAll('.coin-item');
-                    
-                    items.forEach(item => {
-                        const name = item.dataset.name.toLowerCase();
-                        const market = item.dataset.market.toLowerCase();
-                        // 한글명이나 약어(기호)에 검색어가 포함되면 보이고 아니면 숨김
-                        if (name.includes(query) || market.includes(query)) {
-                            item.style.display = 'flex';
-                        } else {
-                            item.style.display = 'none';
-                        }
-                    });
+                searchInput.addEventListener('input', () => {
+                    if (window.filterCoinList) {
+                        window.filterCoinList();
+                    }
                 });
             }
+
+            // 통합 리스트 필터링 함수
+            window.filterCoinList = function() {
+                const query = searchInput ? searchInput.value.toLowerCase() : '';
+                const activeTab = document.querySelector('#market-tabs .active').getAttribute('data-target');
+                const items = document.querySelectorAll('.coin-item');
+                
+                items.forEach(item => {
+                    const name = item.dataset.name.toLowerCase();
+                    const market = item.dataset.market.toLowerCase();
+                    const isFav = window.favoriteMarkets.includes(item.dataset.market);
+                    
+                    let show = true;
+                    // 검색어 필터
+                    if (query && !name.includes(query) && !market.includes(query)) {
+                        show = false;
+                    }
+                    // 탭 필터 (관심 탭일 경우 찜한 것만)
+                    if (activeTab === 'fav-market-list' && !isFav) {
+                        show = false;
+                    }
+                    
+                    item.style.display = show ? 'flex' : 'none';
+                });
+            };
 
             // 4. 최초 시세 불러오기 및 주기적 업데이트 시작
             await updateCoinPrices();
@@ -99,11 +122,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 300);
             }
 
+            const isFav = window.favoriteMarkets.includes(coin.market);
+            const favText = isFav ? '★' : '☆';
+            const favColor = isFav ? '#FBBF24' : 'rgba(255, 255, 255, 0.2)';
+
             el.innerHTML = `
                 <div class="coin-item-left">
                     <div style="display:flex; align-items:center;">
                         <span class="coin-item-name">${coin.korean_name}</span>
-                        <span class="btn-favorite" data-market="${coin.market}" style="margin-left: 0.3rem; margin-bottom: 0.1rem; cursor: pointer; color: rgba(255, 255, 255, 0.2); font-size:1rem; transition:color 0.2s;">☆</span>
+                        <span class="btn-favorite" data-market="${coin.market}" style="margin-left: 0.3rem; margin-bottom: 0.1rem; cursor: pointer; color: ${favColor}; font-size:1rem; transition:color 0.2s;">${favText}</span>
                     </div>
                     <span class="coin-item-symbol">${coin.market.replace('KRW-', '')}</span>
                 </div>
@@ -115,12 +142,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 종목 전체 클릭 이벤트: 차트 변경
             el.addEventListener('click', (e) => {
-                // 즐겨찾기 별표 클릭인 경우, 차트 전이는 무시합니다. (예정된 DB 연동 동작)
                 if(e.target.classList.contains('btn-favorite')) {
-                    // 추후 DB가 연동되면 이곳에서 찜하기 토글 로직 동작 (UI만 시뮬레이션)
-                    const isFav = e.target.innerText === '★';
-                    e.target.innerText = isFav ? '☆' : '★';
-                    e.target.style.color = isFav ? 'var(--text-muted)' : '#FBBF24'; // 노란색으로 강조
+                    const userId = sessionStorage.getItem('loggedInUserId');
+                    if (!userId) {
+                        if(window.showToast) window.showToast('로그인이 필요합니다.', 'error');
+                        return;
+                    }
+                    
+                    fetch('/api/favorites/toggle', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: userId, market: coin.market })
+                    })
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.success) {
+                            if (res.isAdded) {
+                                e.target.innerText = '★';
+                                e.target.style.color = '#FBBF24';
+                                window.favoriteMarkets.push(coin.market);
+                            } else {
+                                e.target.innerText = '☆';
+                                e.target.style.color = 'rgba(255, 255, 255, 0.2)';
+                                window.favoriteMarkets = window.favoriteMarkets.filter(m => m !== coin.market);
+                            }
+                            if(window.showToast) window.showToast(res.message, 'success');
+                            
+                            // 탭 필터 다시 적용
+                            if (window.filterCoinList) window.filterCoinList();
+                        }
+                    });
+                    
                     return; // 별 클릭 시에는 차트 변동 없음
                 }
 
