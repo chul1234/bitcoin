@@ -169,9 +169,6 @@ public class AiAutoTradingBotScheduler {
 
                             log.info("🤖 [매수 실행] 유저: {}, 테마: {}, 순위: {}등, 마켓: {}, 사유: 유망 코인 포착 (점수: {})", user.getUserId(), theme, (i+1), targetMarket, topCoin.getScore());
                             orderService.buyOrder(user.getUserId(), targetMarket, currentPrice, volumeToBuy, "MARKET", null);
-                            
-                            // 매수 후 KRW 잔고 차감 (동일 루프 내 다음 코인 예산 산정을 위함)
-                            krwAsset.setBalance(krwAsset.getBalance().subtract(budgetToUse));
                         }
                     }
                 }

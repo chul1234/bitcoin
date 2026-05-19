@@ -169,8 +169,6 @@ public class AiBotController {
                                     log.append("EXECUTING BUY ORDER...\n");
                                     orderService.buyOrder(user.getUserId(), targetMarket, currentPrice, volumeToBuy, "MARKET", null);
                                     log.append("BUY ORDER EXECUTED!\n");
-                                    
-                                    krwAsset.setBalance(krwAsset.getBalance().subtract(budgetToUse));
                                 } else {
                                     log.append("Current price is null!\n");
                                 }
