@@ -25,9 +25,14 @@ public class FavoriteController {
     private UserRepository userRepository;
 
     @GetMapping
-    public ResponseEntity<?> getFavorites(@RequestParam Long userId) {
+    public ResponseEntity<?> getFavorites(@RequestParam String userId) {
         try {
-            List<Favorite> favorites = favoriteRepository.findByUserId(userId);
+            Optional<User> userOpt = userRepository.findByUserId(userId);
+            if (userOpt.isEmpty()) {
+                throw new RuntimeException("사용자를 찾을 수 없습니다.");
+            }
+
+            List<Favorite> favorites = favoriteRepository.findByUser(userOpt.get());
             List<String> markets = favorites.stream()
                     .map(Favorite::getMarket)
                     .collect(Collectors.toList());
@@ -47,15 +52,16 @@ public class FavoriteController {
     @PostMapping("/toggle")
     public ResponseEntity<?> toggleFavorite(@RequestBody Map<String, Object> payload) {
         try {
-            Long userId = Long.parseLong(payload.get("userId").toString());
+            String userIdString = payload.get("userId").toString();
             String market = payload.get("market").toString();
 
-            Optional<User> userOpt = userRepository.findById(userId);
+            Optional<User> userOpt = userRepository.findByUserId(userIdString);
             if (userOpt.isEmpty()) {
                 throw new RuntimeException("사용자를 찾을 수 없습니다.");
             }
 
-            Optional<Favorite> existingOpt = favoriteRepository.findByUserIdAndMarket(userId, market);
+            User user = userOpt.get();
+            Optional<Favorite> existingOpt = favoriteRepository.findByUserAndMarket(user, market);
             boolean isAdded = false;
 
             if (existingOpt.isPresent()) {
@@ -64,7 +70,7 @@ public class FavoriteController {
             } else {
                 // 없으면 추가
                 Favorite fav = Favorite.builder()
-                        .user(userOpt.get())
+                        .user(user)
                         .market(market)
                         .build();
                 favoriteRepository.save(fav);
