@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (wantToActivate) {
                     const titleRaw = themeMeta[themeKey].title;
                     const cleanTitle = titleRaw.replace(/[^가-힣a-zA-Z\s]/g, '').trim();
-                    if (!confirm(`[${cleanTitle}] 테마로 24시간 AI 자동매매 봇을 가동하시겠습니까?\n\n- 1분마다 수익(+5%) 익절 및 악재(<40점) 손절을 자동으로 진행합니다.\n- 해당 테마의 최상위 코인을 일정 예산으로 자동 매수합니다.\n- 다른 테마가 이미 켜져있다면 이 테마로 교체됩니다.`)) {
+                    if (!confirm(`[${cleanTitle}] 테마로 24시간 AI 자동매매 봇을 가동하시겠습니까?\n\n- (분산 투자) 해당 테마의 상위 3개 코인을 동시에 분산 매수합니다.\n- (수익 극대화) 최대 +10%까지 수익을 길게 가져가며, 상승세 꺾임 감지 시 미리 익절합니다.\n- (철통 방어) -7% 도달 또는 AI 악재 감지 시 칼손절하여 자산을 보호합니다.\n- 다른 테마가 이미 켜져있다면 이 테마로 교체됩니다.`)) {
                         return;
                     }
                 } else {

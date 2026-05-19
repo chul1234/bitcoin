@@ -285,6 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 초기 실행
+    // 초기 실행 및 3초 주기 실시간 자동 갱신 (AI 매매 결과 실시간 반영)
     fetchUserAssets();
+    setInterval(fetchUserAssets, 3000);
 });

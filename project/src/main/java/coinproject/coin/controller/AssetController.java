@@ -58,9 +58,16 @@ public class AssetController {
                 // KRW 지갑이 없으면 자동으로 10,000,000 KRW 지급
                 if ("KRW".equals(targetCurrency)) {
                     UserAsset newWallet = assetService.initKrwBalance(loggedInUserId, new BigDecimal("10000000"));
-                    return ResponseEntity.ok(Map.of("success", true, "data", newWallet, "message", "초기 시드머니 1,000만 원이 지급되었습니다."));
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", true);
+                    response.put("data", newWallet);
+                    response.put("message", "초기 시드머니 1,000만 원이 지급되었습니다.");
+                    return ResponseEntity.ok(response);
                 }
-                return ResponseEntity.ok(Map.of("success", true, "data", null)); // 다른 코인 지갑 없음
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("data", null);
+                return ResponseEntity.ok(response); // 다른 코인 지갑 없음
             }
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));

@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (profileName && profileUserid) {
         fetchUserInfo();
         fetchMyAssets();
+        // 3초마다 보유 자산 실시간 자동 업데이트 (AI 봇 매수/매도 실시간 확인용)
+        setInterval(fetchMyAssets, 3000);
     }
 
     async function fetchMyAssets() {
