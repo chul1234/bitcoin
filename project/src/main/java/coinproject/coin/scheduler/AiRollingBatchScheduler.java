@@ -115,7 +115,7 @@ public class AiRollingBatchScheduler {
                "    \"market\": \"코인 티커(예: KRW-BTC)\",\n" +
                "    \"score\": 0~100 사이의 방향성 점수 (0: 초강력 악재/폭락 예상, 50: 중립, 100: 초강력 호재/폭등 예상),\n" +
                "    \"summary\": \"분석에 대한 3줄짜리 한국어 핵심 요약\",\n" +
-               "    \"theme\": \"이 코인의 성격에 따라 SAFE, HIGH_RISK, TRENDING 중 하나만 입력\"\n" +
+               "    \"theme\": \"이 코인의 성격에 따라 SAFE(우량), HIGH_RISK(고위험), TRENDING(트렌딩), VALUE(저가매수/고잠재력) 중 하나만 입력\"\n" +
                "  }\n" +
                "]\n\n" +
                "반드시 위 포맷을 지킨 JSON 배열(`[...]`) 텍스트만 출력해.";

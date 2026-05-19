@@ -35,6 +35,25 @@ public class AiController {
     }
 
     /**
+     * 4가지 테마(SAFE, HIGH_RISK, TRENDING, VALUE)별 포트폴리오(상위 최대 5개)를 반환합니다.
+     */
+    @GetMapping("/portfolios")
+    public ResponseEntity<java.util.Map<String, List<AiCoinAnalysis>>> getPortfolios() {
+        java.util.Map<String, List<AiCoinAnalysis>> portfolios = new java.util.HashMap<>();
+        
+        String[] themes = {"SAFE", "HIGH_RISK", "TRENDING", "VALUE"};
+        for (String theme : themes) {
+            List<AiCoinAnalysis> themeCoins = aiCoinAnalysisRepository.findByThemeOrderByScoreDesc(theme);
+            if (themeCoins.size() > 5) {
+                themeCoins = themeCoins.subList(0, 5);
+            }
+            portfolios.put(theme, themeCoins);
+        }
+        
+        return ResponseEntity.ok(portfolios);
+    }
+
+    /**
      * 특정 마켓의 최신 AI 방향성 점수와 분석 결과를 가져옵니다. (예측 차트 그리기용)
      */
     @GetMapping("/score")
