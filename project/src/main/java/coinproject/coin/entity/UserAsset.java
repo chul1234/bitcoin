@@ -38,4 +38,25 @@ public class UserAsset {
     @Column(name = "avg_buy_price", precision = 30, scale = 8, nullable = false)
     @Builder.Default
     private BigDecimal avgBuyPrice = BigDecimal.ZERO;
+
+    // VS Code (IDE) Lombok 인식 지연으로 인한 빨간 줄(에러 표시) 방지용 명시적 Getter/Setter
+    public BigDecimal getBalance() {
+        return balance;
+    }
+
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public BigDecimal getAvgBuyPrice() {
+        return avgBuyPrice;
+    }
+
+    public void setAvgBuyPrice(BigDecimal avgBuyPrice) {
+        this.avgBuyPrice = avgBuyPrice;
+    }
 }
