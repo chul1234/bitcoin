@@ -39,17 +39,16 @@ public class UserAsset {
     @Builder.Default
     private BigDecimal avgBuyPrice = BigDecimal.ZERO;
 
-    // VS Code (IDE) Lombok 인식 지연으로 인한 빨간 줄(에러 표시) 방지용 명시적 Getter/Setter
+    public String getCurrency() {
+        return currency;
+    }
+
     public BigDecimal getBalance() {
         return balance;
     }
 
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
-    }
-
-    public String getCurrency() {
-        return currency;
     }
 
     public BigDecimal getAvgBuyPrice() {
