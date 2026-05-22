@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -31,17 +32,25 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "tier")
+    private String tier = "BRONZE";
+
+    @Column(name = "cumulative_profit_rate", precision = 10, scale = 4)
+    private BigDecimal cumulativeProfitRate = BigDecimal.ZERO;
+
     // Default Constructor
     public User() {}
 
     // All-args Constructor
-    public User(Long id, String userId, String email, String password, String name, LocalDateTime createdAt) {
+    public User(Long id, String userId, String email, String password, String name, LocalDateTime createdAt, String tier, BigDecimal cumulativeProfitRate) {
         this.id = id;
         this.userId = userId;
         this.email = email;
         this.password = password;
         this.name = name;
         this.createdAt = createdAt;
+        this.tier = tier != null ? tier : "BRONZE";
+        this.cumulativeProfitRate = cumulativeProfitRate != null ? cumulativeProfitRate : BigDecimal.ZERO;
     }
 
     // Getters and Setters
@@ -63,6 +72,12 @@ public class User {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
+    public String getTier() { return tier; }
+    public void setTier(String tier) { this.tier = tier; }
+
+    public BigDecimal getCumulativeProfitRate() { return cumulativeProfitRate; }
+    public void setCumulativeProfitRate(BigDecimal cumulativeProfitRate) { this.cumulativeProfitRate = cumulativeProfitRate; }
+
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
@@ -78,11 +93,15 @@ public class User {
         private String email;
         private String password;
         private String name;
+        private String tier = "BRONZE";
+        private BigDecimal cumulativeProfitRate = BigDecimal.ZERO;
 
         public UserBuilder userId(String userId) { this.userId = userId; return this; }
         public UserBuilder email(String email) { this.email = email; return this; }
         public UserBuilder password(String password) { this.password = password; return this; }
         public UserBuilder name(String name) { this.name = name; return this; }
+        public UserBuilder tier(String tier) { this.tier = tier; return this; }
+        public UserBuilder cumulativeProfitRate(BigDecimal cumulativeProfitRate) { this.cumulativeProfitRate = cumulativeProfitRate; return this; }
 
         public User build() {
             User user = new User();
@@ -90,6 +109,8 @@ public class User {
             user.setEmail(this.email);
             user.setPassword(this.password);
             user.setName(this.name);
+            user.setTier(this.tier);
+            user.setCumulativeProfitRate(this.cumulativeProfitRate);
             return user;
         }
     }

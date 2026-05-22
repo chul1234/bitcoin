@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. 컨테이너 및 탭 UI 요소
     const listContainer = document.getElementById('krw-market-list');
     const favContainer = document.getElementById('fav-market-list');
+    const ownedContainer = document.getElementById('owned-market-list');
     const marketTabs = document.querySelectorAll('#market-tabs .market-tab');
     
     let coinMarkets = [];
@@ -35,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 2. KRW(원화) 마켓만 필터링
             coinMarkets = data.filter(item => item.market.startsWith('KRW-'));
             
-            // + 즐겨찾기 목록 가져오기
+            // + 즐겨찾기 목록 및 보유 코인 목록 가져오기
             const userId = sessionStorage.getItem('loggedInUserId');
             if (userId) {
                 try {
@@ -45,8 +46,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.favoriteMarkets = favResult.data;
                     }
                 } catch(e) {}
+                
+                try {
+                    const assetRes = await fetch(`/api/assets`, { headers: { 'X-User-Id': userId } });
+                    const assetResult = await assetRes.json();
+                    if (assetResult.success) {
+                        window.ownedMarkets = assetResult.data
+                            .filter(a => a.currency !== 'KRW' && a.balance > 0)
+                            .map(a => 'KRW-' + a.currency);
+                    }
+                } catch(e) {}
             }
             if (!window.favoriteMarkets) window.favoriteMarkets = [];
+            if (!window.ownedMarkets) window.ownedMarkets = [];
             
             // 3. 초기 목록 UI 렌더링
             renderCoinList();
@@ -71,19 +83,43 @@ document.addEventListener('DOMContentLoaded', () => {
                     const name = item.dataset.name.toLowerCase();
                     const market = item.dataset.market.toLowerCase();
                     const isFav = window.favoriteMarkets.includes(item.dataset.market);
+                    const isOwned = window.ownedMarkets.includes(item.dataset.market);
                     
                     let show = true;
                     // 검색어 필터
                     if (query && !name.includes(query) && !market.includes(query)) {
                         show = false;
                     }
-                    // 탭 필터 (관심 탭일 경우 찜한 것만)
+                    // 탭 필터
                     if (activeTab === 'fav-market-list' && !isFav) {
+                        show = false;
+                    }
+                    if (activeTab === 'owned-market-list' && !isOwned) {
                         show = false;
                     }
                     
                     item.style.display = show ? 'flex' : 'none';
                 });
+                
+                // 각 컨테이너 표시 전환
+                if (listContainer) listContainer.style.display = activeTab === 'krw-market-list' ? 'block' : 'none';
+                if (favContainer) favContainer.style.display = activeTab === 'fav-market-list' ? 'block' : 'none';
+                if (ownedContainer) ownedContainer.style.display = activeTab === 'owned-market-list' ? 'block' : 'none';
+                
+                // 만약 활성화된 탭에 보이는 아이템이 하나도 없다면, 빈 안내 메시지를 보여주는 로직 (기본적으로 컨테이너 자체를 보여주되, 내용은 CSS로 처리하거나 여기에 추가 로직 작성 가능)
+                if (activeTab === 'krw-market-list' && listContainer) { listContainer.style.display = 'block'; if (favContainer) favContainer.style.display = 'none'; if (ownedContainer) ownedContainer.style.display = 'none'; }
+                if (activeTab === 'fav-market-list' && favContainer) { favContainer.style.display = 'block'; if (listContainer) listContainer.style.display = 'none'; if (ownedContainer) ownedContainer.style.display = 'none'; }
+                if (activeTab === 'owned-market-list' && ownedContainer) { ownedContainer.style.display = 'block'; if (listContainer) listContainer.style.display = 'none'; if (favContainer) favContainer.style.display = 'none'; }
+                
+                // 아이템 목록을 현재 컨테이너로 이동
+                const activeContainer = document.getElementById(activeTab);
+                if (activeContainer) {
+                    items.forEach(item => {
+                        if (item.style.display !== 'none') {
+                            activeContainer.appendChild(item);
+                        }
+                    });
+                }
             };
 
             // 4. 최초 시세 불러오기 및 주기적 업데이트 시작

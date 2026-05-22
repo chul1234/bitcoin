@@ -106,6 +106,28 @@
     background: #64748B;
 }
 
+.tier-badge {
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: white;
+    margin-left: 0.2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+}
+.tier-bronze { background-color: #cd7f32; }
+.tier-silver { background-color: #c0c0c0; color: #333; }
+.tier-gold { background-color: #ffd700; color: #333; }
+.tier-platinum { background-color: #e5e4e2; color: #333; border: 1px solid #7cb9e8; }
+.tier-diamond { background-color: #b9f2ff; color: #111; border: 1px solid #00bfff; }
+
+.search-box {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
 .post-meta {
     color: var(--text-muted);
     font-size: 0.85rem;

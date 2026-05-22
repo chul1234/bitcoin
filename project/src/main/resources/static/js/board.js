@@ -124,13 +124,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 작성자 뱃지 렌더링 유틸
-    function renderAuthorBadge(author, isAnon) {
+    function renderAuthorBadge(author, isAnon, tier) {
         const initial = isAnon ? '?' : (author ? author.charAt(0).toUpperCase() : '?');
         const badgeClass = isAnon ? 'author-badge anon' : 'author-badge';
+        
+        // 티어 변환 로직 (익명이면 티어 숨김)
+        let tierHtml = '';
+        if (!isAnon && tier) {
+            let tierName = '브론즈';
+            let tierIcon = '🥉';
+            let tierClass = 'tier-bronze';
+            
+            if (tier === 'SILVER') { tierName = '실버'; tierIcon = '🥈'; tierClass = 'tier-silver'; }
+            else if (tier === 'GOLD') { tierName = '골드'; tierIcon = '🥇'; tierClass = 'tier-gold'; }
+            else if (tier === 'PLATINUM') { tierName = '플래티넘'; tierIcon = '💎'; tierClass = 'tier-platinum'; }
+            else if (tier === 'DIAMOND') { tierName = '다이아'; tierIcon = '👑'; tierClass = 'tier-diamond'; }
+            
+            tierHtml = `<span class="tier-badge ${tierClass}">${tierIcon} ${tierName}</span>`;
+        }
+        
         return `
-            <div class="post-author">
+            <div class="post-author" style="display:flex; align-items:center; gap:0.5rem;">
                 <div class="${badgeClass}">${initial}</div>
                 <span>${author}</span>
+                ${tierHtml}
             </div>
         `;
     }
@@ -185,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             tr.innerHTML = `
                 <td class="post-title">${noticeIcon}${post.title}</td>
-                <td>${renderAuthorBadge(post.author, post.isAnon)}</td>
+                <td>${renderAuthorBadge(post.author, post.isAnon, post.tier)}</td>
                 <td class="view-count-cell" style="text-align: center; color:var(--text-muted); font-size:0.85rem;">${post.viewCount || 0}</td>
                 <td style="text-align: right; color:var(--text-muted); font-size:0.85rem;">${formatDate(post.date)}</td>
             `;
@@ -255,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTitle.innerText = '게시글 읽기';
         
         detailTitle.innerText = post.title;
-        detailAuthor.innerHTML = renderAuthorBadge(post.author, post.isAnon);
+        detailAuthor.innerHTML = renderAuthorBadge(post.author, post.isAnon, post.tier);
         detailDate.innerText = formatDate(post.date);
         detailContent.innerHTML = post.content;
         if (detailViews) detailViews.innerText = post.viewCount || 0;

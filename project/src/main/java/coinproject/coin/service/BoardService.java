@@ -243,11 +243,16 @@ public class BoardService {
         map.put("date", post.getCreatedAt() != null ? post.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null);
         
         if (post.getUser() != null) {
-            map.put("userId", post.getUser().getUserId());
+            String userId = post.getUser().getUserId();
+            map.put("userId", userId);
             map.put("author", Boolean.TRUE.equals(post.getIsAnonymous()) ? "익명" : post.getUser().getName());
+            map.put("tier", "admin".equals(userId) ? "DIAMOND" : post.getUser().getTier());
+            map.put("profitRate", post.getUser().getCumulativeProfitRate());
         } else {
             map.put("userId", "unknown");
             map.put("author", "알 수 없음");
+            map.put("tier", "BRONZE");
+            map.put("profitRate", 0);
         }
         return map;
     }
@@ -262,11 +267,16 @@ public class BoardService {
         map.put("date", comment.getCreatedAt() != null ? comment.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null);
         
         if (comment.getUser() != null) {
-            map.put("userId", comment.getUser().getUserId());
+            String userId = comment.getUser().getUserId();
+            map.put("userId", userId);
             map.put("author", Boolean.TRUE.equals(comment.getIsAnonymous()) ? "익명" : comment.getUser().getName());
+            map.put("tier", "admin".equals(userId) ? "DIAMOND" : comment.getUser().getTier());
+            map.put("profitRate", comment.getUser().getCumulativeProfitRate());
         } else {
             map.put("userId", "unknown");
             map.put("author", "알 수 없음");
+            map.put("tier", "BRONZE");
+            map.put("profitRate", 0);
         }
         return map;
     }
