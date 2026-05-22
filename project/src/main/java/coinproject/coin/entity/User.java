@@ -72,7 +72,7 @@ public class User {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public String getTier() { return tier; }
+    public String getTier() { return tier != null ? tier : "BRONZE"; }
     public void setTier(String tier) { this.tier = tier; }
 
     public BigDecimal getCumulativeProfitRate() { return cumulativeProfitRate; }
