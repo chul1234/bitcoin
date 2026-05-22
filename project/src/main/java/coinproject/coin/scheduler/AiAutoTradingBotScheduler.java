@@ -77,7 +77,8 @@ public class AiAutoTradingBotScheduler {
         if (theme == null) return;
         
         // --- 테마별 파라미터 세팅 ---
-        BigDecimal buyRatio = new BigDecimal("0.10"); // 기본 10%
+        BigDecimal buyRatio = new BigDecimal("0.10"); // 첫 매수 비중
+        BigDecimal reBuyRatio = new BigDecimal("0.03"); // 추가 매수 비중 (기본 3%)
         int maxBuys = 3;
         int cooldownMins = 30;
         int minScoreToBuy = 70;
@@ -86,22 +87,22 @@ public class AiAutoTradingBotScheduler {
 
         switch (theme) {
             case "VALUE":
-                buyRatio = new BigDecimal("0.20");
+                buyRatio = new BigDecimal("0.20"); reBuyRatio = new BigDecimal("0.05");
                 maxBuys = 4; cooldownMins = 40; minScoreToBuy = 65;
                 takeProfit = new BigDecimal("15.0"); stopLoss = new BigDecimal("-8.0");
                 break;
             case "HIGH_RISK":
-                buyRatio = new BigDecimal("0.25");
+                buyRatio = new BigDecimal("0.25"); reBuyRatio = new BigDecimal("0.05");
                 maxBuys = 5; cooldownMins = 10; minScoreToBuy = 60;
                 takeProfit = new BigDecimal("20.0"); stopLoss = new BigDecimal("-10.0");
                 break;
             case "TRENDING":
-                buyRatio = new BigDecimal("0.15");
+                buyRatio = new BigDecimal("0.15"); reBuyRatio = new BigDecimal("0.04");
                 maxBuys = 4; cooldownMins = 20; minScoreToBuy = 65;
                 takeProfit = new BigDecimal("10.0"); stopLoss = new BigDecimal("-5.0");
                 break;
             case "SAFE":
-                buyRatio = new BigDecimal("0.10");
+                buyRatio = new BigDecimal("0.10"); reBuyRatio = new BigDecimal("0.02");
                 maxBuys = 3; cooldownMins = 30; minScoreToBuy = 70;
                 takeProfit = new BigDecimal("5.0"); stopLoss = new BigDecimal("-3.0");
                 break;
@@ -178,12 +179,15 @@ public class AiAutoTradingBotScheduler {
                         .anyMatch(a -> targetCurrency.equals(a.getCurrency()) && a.getBalance().compareTo(BigDecimal.ZERO) > 0);
 
                 boolean canBuy = true;
+                BigDecimal actualRatioToUse = buyRatio;
+
                 if (alreadyOwns) {
-                    long buyCount = orderRepository.countByUserAndMarketAndSide(user, targetMarket, "BID");
+                    actualRatioToUse = reBuyRatio; // 이미 보유 중이면 '추가 매수 비중(1~5%)' 사용
+                    long buyCount = orderRepository.countByUserAndMarketAndSide(user, targetMarket, "BUY");
                     if (buyCount >= maxBuys) {
                         canBuy = false;
                     } else {
-                        Optional<coinproject.coin.entity.Order> lastOrderOpt = orderRepository.findFirstByUserAndMarketAndSideOrderByCreatedAtDesc(user, targetMarket, "BID");
+                        Optional<coinproject.coin.entity.Order> lastOrderOpt = orderRepository.findFirstByUserAndMarketAndSideOrderByCreatedAtDesc(user, targetMarket, "BUY");
                         if (lastOrderOpt.isPresent()) {
                             java.time.Duration duration = java.time.Duration.between(lastOrderOpt.get().getCreatedAt(), java.time.LocalDateTime.now());
                             if (duration.toMinutes() < cooldownMins) {
@@ -195,7 +199,7 @@ public class AiAutoTradingBotScheduler {
 
                 if (canBuy) {
                     BigDecimal availableKrw = krwAsset.getBalance();
-                    BigDecimal budgetToUse = availableKrw.multiply(buyRatio);
+                    BigDecimal budgetToUse = availableKrw.multiply(actualRatioToUse);
 
                     if (budgetToUse.compareTo(MIN_ORDER_KRW) >= 0) {
                         Map<String, BigDecimal> priceMap = upbitPriceService.getCurrentPrices(Collections.singleton(targetMarket));
@@ -206,7 +210,8 @@ public class AiAutoTradingBotScheduler {
                             BigDecimal maxCostWithoutFee = budgetToUse.divide(feeRate, 8, RoundingMode.DOWN);
                             BigDecimal volumeToBuy = maxCostWithoutFee.divide(currentPrice, 8, RoundingMode.DOWN);
 
-                            log.info("🤖 [매수 실행] 유저: {}, 테마: {}, 순위: {}등, 마켓: {}, 사유: 유망 코인 추가 매수 (점수: {})", user.getUserId(), theme, (i+1), targetMarket, topCoin.getScore());
+                            String reasonMsg = alreadyOwns ? "추가 매수 (불타기/물타기)" : "신규 포착 매수";
+                            log.info("🤖 [매수 실행] 유저: {}, 테마: {}, 마켓: {}, 사유: {} (점수: {})", user.getUserId(), theme, targetMarket, reasonMsg, topCoin.getScore());
                             orderService.buyOrder(user.getUserId(), targetMarket, currentPrice, volumeToBuy, "MARKET", null);
                         }
                     }
