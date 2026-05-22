@@ -50,4 +50,34 @@ public class Order {
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+
+    public String getMarket() { return market; }
+    public void setMarket(String market) { this.market = market; }
+
+    public String getSide() { return side; }
+    public void setSide(String side) { this.side = side; }
+
+    public String getOrderType() { return orderType; }
+    public void setOrderType(String orderType) { this.orderType = orderType; }
+
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
+
+    public BigDecimal getVolume() { return volume; }
+    public void setVolume(BigDecimal volume) { this.volume = volume; }
+
+    public BigDecimal getTriggerPrice() { return triggerPrice; }
+    public void setTriggerPrice(BigDecimal triggerPrice) { this.triggerPrice = triggerPrice; }
+
+    public String getState() { return state; }
+    public void setState(String state) { this.state = state; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

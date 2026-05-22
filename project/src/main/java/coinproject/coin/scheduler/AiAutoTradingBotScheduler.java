@@ -10,7 +10,8 @@ import coinproject.coin.repository.UserAssetRepository;
 import coinproject.coin.service.OrderService;
 import coinproject.coin.service.UpbitPriceService;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -21,10 +22,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@Slf4j
 @Component
 
 public class AiAutoTradingBotScheduler {
+
+    private static final Logger log = LoggerFactory.getLogger(AiAutoTradingBotScheduler.class);
 
     private final UserAiConfigRepository userAiConfigRepository;
     private final AiCoinAnalysisRepository aiCoinAnalysisRepository;
@@ -126,7 +128,7 @@ public class AiAutoTradingBotScheduler {
 
             // 수익률 계산
             BigDecimal avgBuyPrice = asset.getAvgBuyPrice();
-            if (avgBuyPrice.compareTo(BigDecimal.ZERO) <= 0) continue;
+            if (avgBuyPrice == null || avgBuyPrice.compareTo(BigDecimal.ZERO) <= 0) continue;
             
             BigDecimal profitRatio = currentPrice.subtract(avgBuyPrice)
                     .divide(avgBuyPrice, 4, RoundingMode.HALF_UP)
@@ -168,10 +170,21 @@ public class AiAutoTradingBotScheduler {
         if (topCoins.isEmpty()) return;
 
         int limit = Math.min(3, topCoins.size());
+        
+        // 업비트 API Rate Limit (초당 10회) 방지를 위해 한 번에 가격 조회
+        java.util.Set<String> targetMarketsToFetch = new java.util.HashSet<>();
+        for (int i = 0; i < limit; i++) {
+            if (topCoins.get(i).getScore() != null && topCoins.get(i).getScore() >= minScoreToBuy) {
+                targetMarketsToFetch.add(topCoins.get(i).getMarket());
+            }
+        }
+        
+        Map<String, BigDecimal> currentPrices = targetMarketsToFetch.isEmpty() ? java.util.Collections.emptyMap() : upbitPriceService.getCurrentPrices(targetMarketsToFetch);
+
         for (int i = 0; i < limit; i++) {
             AiCoinAnalysis topCoin = topCoins.get(i);
             
-            if (topCoin.getScore() >= minScoreToBuy) {
+            if (topCoin.getScore() != null && topCoin.getScore() >= minScoreToBuy) {
                 String targetMarket = topCoin.getMarket();
                 String targetCurrency = targetMarket.split("-")[1];
 
@@ -202,8 +215,7 @@ public class AiAutoTradingBotScheduler {
                     BigDecimal budgetToUse = availableKrw.multiply(actualRatioToUse);
 
                     if (budgetToUse.compareTo(MIN_ORDER_KRW) >= 0) {
-                        Map<String, BigDecimal> priceMap = upbitPriceService.getCurrentPrices(Collections.singleton(targetMarket));
-                        BigDecimal currentPrice = priceMap.get(targetMarket);
+                        BigDecimal currentPrice = currentPrices.get(targetMarket);
                         
                         if (currentPrice != null) {
                             BigDecimal feeRate = new BigDecimal("1.0005");

@@ -5,8 +5,8 @@ import coinproject.coin.entity.UserAsset;
 import coinproject.coin.repository.UserAssetRepository;
 import coinproject.coin.repository.UserRepository;
 import coinproject.coin.service.UpbitPriceService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,14 +18,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Component
-@RequiredArgsConstructor
 public class UserTierUpdateScheduler {
+
+    private static final Logger log = LoggerFactory.getLogger(UserTierUpdateScheduler.class);
 
     private final UserRepository userRepository;
     private final UserAssetRepository userAssetRepository;
     private final UpbitPriceService upbitPriceService;
+
+    public UserTierUpdateScheduler(UserRepository userRepository,
+                                   UserAssetRepository userAssetRepository,
+                                   UpbitPriceService upbitPriceService) {
+        this.userRepository = userRepository;
+        this.userAssetRepository = userAssetRepository;
+        this.upbitPriceService = upbitPriceService;
+    }
 
     private static final BigDecimal INITIAL_SEED_MONEY = new BigDecimal("10000000");
 
@@ -53,7 +61,7 @@ public class UserTierUpdateScheduler {
                         .collect(Collectors.toSet());
 
                 // 2. 실시간 시세 조회
-                Map<String, BigDecimal> currentPrices = markets.isEmpty() ? Map.of() : upbitPriceService.getCurrentPrices(markets);
+                Map<String, BigDecimal> currentPrices = markets.isEmpty() ? java.util.Collections.emptyMap() : upbitPriceService.getCurrentPrices(markets);
 
                 // 3. 총 자산 계산 (KRW + 코인 현재가치)
                 for (UserAsset asset : assets) {
