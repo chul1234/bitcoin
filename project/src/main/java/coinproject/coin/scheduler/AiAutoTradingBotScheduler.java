@@ -54,7 +54,7 @@ public class AiAutoTradingBotScheduler {
     // 최소 주문 금액 (업비트 기준 보통 5000원)
     private static final BigDecimal MIN_ORDER_KRW = new BigDecimal("5000");
 
-    @Scheduled(fixedRate = 5000) // 5초 주기 (빠른 테스트용)
+    @Scheduled(fixedRate = 10000) // 10초 주기 (안정적인 API 호출을 위함)
     @org.springframework.transaction.annotation.Transactional
     public void runAutoTradingBots() {
         List<UserAiConfig> activeConfigs = userAiConfigRepository.findByIsActiveTrue();
