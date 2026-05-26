@@ -1,28 +1,56 @@
 package coinproject.coin.dto;
 
-import lombok.Data;
 import java.util.List;
 
 /**
  * 구글 Gemini API 응답용 DTO
+ * (Lombok 미적용 환경에서도 빨간 줄이 뜨지 않도록 명시적 Getter/Setter 추가)
  */
-@Data
 public class GeminiResponse {
     
     private List<Candidate> candidates;
 
-    @Data
+    public List<Candidate> getCandidates() {
+        return candidates;
+    }
+
+    public void setCandidates(List<Candidate> candidates) {
+        this.candidates = candidates;
+    }
+
     public static class Candidate {
         private Content content;
+
+        public Content getContent() {
+            return content;
+        }
+
+        public void setContent(Content content) {
+            this.content = content;
+        }
     }
 
-    @Data
     public static class Content {
         private List<Part> parts;
+
+        public List<Part> getParts() {
+            return parts;
+        }
+
+        public void setParts(List<Part> parts) {
+            this.parts = parts;
+        }
     }
 
-    @Data
     public static class Part {
         private String text;
+
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
     }
 }

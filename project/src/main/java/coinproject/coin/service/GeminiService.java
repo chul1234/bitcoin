@@ -2,8 +2,8 @@ package coinproject.coin.service;
 
 import coinproject.coin.dto.GeminiRequest;
 import coinproject.coin.dto.GeminiResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -12,10 +12,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class GeminiService {
+
+    private static final Logger log = LoggerFactory.getLogger(GeminiService.class);
 
     @Value("${gemini.api.key}")
     private String geminiApiKey;
