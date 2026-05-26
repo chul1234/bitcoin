@@ -387,9 +387,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // -----------------------------------------------------
     // [투자 관리 탭 로직]
     // -----------------------------------------------------
+    let profitSortDesc = true; // 수익률 정렬 상태 (기본: 내림차순)
+
     const btnRefreshInvestment = document.getElementById('btn-refresh-investment');
     if (btnRefreshInvestment) {
         btnRefreshInvestment.addEventListener('click', fetchInvestments);
+    }
+
+    const thProfitRate = document.getElementById('th-profit-rate');
+    if (thProfitRate) {
+        thProfitRate.addEventListener('click', () => {
+            profitSortDesc = !profitSortDesc;
+            thProfitRate.innerHTML = `수익률 ${profitSortDesc ? '▼' : '▲'}`;
+            fetchInvestments(); // 정렬 후 재로드
+        });
     }
 
     async function fetchInvestments() {
@@ -441,8 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 3. 렌더링
-        let html = '';
+        // 3. 데이터 계산 및 정렬
         users.forEach(user => {
             let krwBalance = 0;
             let coinValuation = 0;
@@ -458,8 +468,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            const totalAsset = krwBalance + coinValuation;
-            const profitRate = ((totalAsset - 10000000) / 10000000) * 100;
+            user.calculatedKrw = krwBalance;
+            user.calculatedCoin = coinValuation;
+            user.calculatedTotal = krwBalance + coinValuation;
+            user.calculatedProfitRate = ((user.calculatedTotal - 10000000) / 10000000) * 100;
+        });
+
+        // 수익률 기준 정렬
+        users.sort((a, b) => {
+            if (profitSortDesc) {
+                return b.calculatedProfitRate - a.calculatedProfitRate;
+            } else {
+                return a.calculatedProfitRate - b.calculatedProfitRate;
+            }
+        });
+
+        // 4. 렌더링
+        let html = '';
+        users.forEach(user => {
+            const krwBalance = user.calculatedKrw;
+            const coinValuation = user.calculatedCoin;
+            const totalAsset = user.calculatedTotal;
+            const profitRate = user.calculatedProfitRate;
+
             const isProfit = profitRate > 0;
             const isLoss = profitRate < 0;
             const colorClass = isProfit ? 'profit' : (isLoss ? 'loss' : '');

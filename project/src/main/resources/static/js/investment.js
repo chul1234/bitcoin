@@ -198,6 +198,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Chart.js 도넛 그래프 업데이트 ---
         updateChart(krwBalance, chartDataMap);
+        updateCustomLegend(krwBalance, chartDataMap);
+    }
+
+    function updateCustomLegend(krwValue, coinDataMap) {
+        const legendContainer = document.getElementById('custom-legend');
+        if (!legendContainer) return;
+        
+        let html = '';
+        
+        if (krwValue > 0) {
+            html += `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#4F46E5;"></span>
+                    <span style="color:#94A3B8; font-size:0.9rem; font-weight:500;">현금 (KRW)</span>
+                </div>
+            `;
+        }
+
+        for (const [coinName, data] of Object.entries(coinDataMap)) {
+            if (data.value > 0) {
+                html += `
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:${data.color};"></span>
+                        <span style="color:#94A3B8; font-size:0.9rem; font-weight:500;">${coinName}</span>
+                    </div>
+                `;
+            }
+        }
+        
+        legendContainer.innerHTML = html;
     }
 
     function updateChart(krwValue, coinDataMap) {
@@ -251,6 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cutout: '70%',
                     plugins: {
                         legend: {
+                            display: false,
                             position: 'right',
                             labels: {
                                 color: '#94A3B8',
