@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const activeTab = document.querySelector('#market-tabs .active').getAttribute('data-target');
                 const items = document.querySelectorAll('.coin-item');
                 
+                let visibleCount = 0;
                 items.forEach(item => {
                     const name = item.dataset.name.toLowerCase();
                     const market = item.dataset.market.toLowerCase();
@@ -99,17 +100,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                     item.style.display = show ? 'flex' : 'none';
+                    if (show) visibleCount++;
                 });
                 
                 // 각 컨테이너 표시 전환
                 if (listContainer) listContainer.style.display = activeTab === 'krw-market-list' ? 'block' : 'none';
                 if (favContainer) favContainer.style.display = activeTab === 'fav-market-list' ? 'block' : 'none';
                 if (ownedContainer) ownedContainer.style.display = activeTab === 'owned-market-list' ? 'block' : 'none';
-                
-                // 만약 활성화된 탭에 보이는 아이템이 하나도 없다면, 빈 안내 메시지를 보여주는 로직 (기본적으로 컨테이너 자체를 보여주되, 내용은 CSS로 처리하거나 여기에 추가 로직 작성 가능)
-                if (activeTab === 'krw-market-list' && listContainer) { listContainer.style.display = 'block'; if (favContainer) favContainer.style.display = 'none'; if (ownedContainer) ownedContainer.style.display = 'none'; }
-                if (activeTab === 'fav-market-list' && favContainer) { favContainer.style.display = 'block'; if (listContainer) listContainer.style.display = 'none'; if (ownedContainer) ownedContainer.style.display = 'none'; }
-                if (activeTab === 'owned-market-list' && ownedContainer) { ownedContainer.style.display = 'block'; if (listContainer) listContainer.style.display = 'none'; if (favContainer) favContainer.style.display = 'none'; }
                 
                 // 아이템 목록을 현재 컨테이너로 이동
                 const activeContainer = document.getElementById(activeTab);
@@ -119,6 +116,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             activeContainer.appendChild(item);
                         }
                     });
+                    
+                    // 빈 메시지 처리
+                    const emptyMsg = activeContainer.querySelector('.empty-msg');
+                    if (emptyMsg) {
+                        emptyMsg.style.display = visibleCount === 0 ? 'block' : 'none';
+                    }
                 }
             };
 

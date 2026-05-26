@@ -15,6 +15,18 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
 
+    @jakarta.annotation.PostConstruct
+    public void autoFixMissingRoles() {
+        // DB에 직접 넣은 등 권한이 없는 유저를 위해 서버 시작 시 자동 복구
+        java.util.List<User> users = userRepository.findAll();
+        for (User user : users) {
+            java.util.List<UserRole> roles = userRoleRepository.findByUserId(user.getUserId());
+            if (roles == null || roles.isEmpty()) {
+                userRoleRepository.save(new UserRole(user.getUserId(), "USER"));
+            }
+        }
+    }
+
     /**
      * 회원 가입 시 기본으로 'USER' 권한 부여 로직 포함
      */

@@ -48,6 +48,26 @@ public class UpbitPriceService {
 
         return prices;
     }
+
+    /**
+     * 지정된 마켓들의 전체 시세(Ticker) 데이터를 원본 JSON 문자열 형태로 반환합니다. (AI 분석용)
+     */
+    public String getRawTickerJson(Set<String> markets) {
+        if (markets == null || markets.isEmpty()) {
+            return "[]";
+        }
+        try {
+            String marketsParam = String.join(",", markets);
+            String url = "https://api.upbit.com/v1/ticker?markets=" + marketsParam;
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return response.getBody();
+            }
+        } catch (Exception e) {
+            System.err.println("업비트 Ticker JSON 조회 오류: " + e.getMessage());
+        }
+        return "[]";
+    }
     /**
      * 업비트에 상장된 모든 원화(KRW) 마켓 목록을 조회합니다.
      */

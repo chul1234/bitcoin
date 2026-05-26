@@ -31,7 +31,7 @@ public class AiRollingBatchScheduler {
     // 한 번에 처리할 코인 개수 (제미나이 3.1 토큰 한도를 넘지 않는 선에서 최대치인 40개로 늘림)
     private static final int CHUNK_SIZE = 40;
 
-    @Scheduled(fixedDelay = 180000) // 3분(180초)마다 실행 (Gemini 3.1 RPD 한도 방어)
+    @Scheduled(fixedDelay = 180000) // 3분(180초)마다 실행 (하루 480 RPD 소모, 20 RPD 여유)
     @Transactional
     public void analyzeCoinsRollingBatch() {
         // 1. 전체 마켓 목록 가져오기
@@ -56,8 +56,9 @@ public class AiRollingBatchScheduler {
         log.info("[AI Rolling Batch] {}/{} 사이클 시작. 타겟 코인: {}", 
                 currentChunkIndex + 1, (int) Math.ceil((double) totalSize / CHUNK_SIZE), targetMarkets);
 
-        // 3. 제미나이에게 던질 정교한 프롬프트(명령어) 작성
-        String prompt = buildPrompt(targetMarkets);
+        // 3. 실시간 시세 데이터 조회 및 정교한 프롬프트(명령어) 작성
+        String rawTickerJson = upbitPriceService.getRawTickerJson(new java.util.HashSet<>(targetMarkets));
+        String prompt = buildPrompt(targetMarkets, rawTickerJson);
 
         // 4. 제미나이 호출
         String jsonResponse = geminiService.askGemini(prompt);
@@ -105,17 +106,19 @@ public class AiRollingBatchScheduler {
         }
     }
 
-    private String buildPrompt(List<String> markets) {
+    private String buildPrompt(List<String> markets, String rawTickerJson) {
         String coins = String.join(", ", markets);
-        return "너는 가상화폐 시장 전문 AI 애널리스트야. " +
-               "다음 " + markets.size() + "개의 코인에 대한 최신 글로벌 뉴스와 시장 심리를 분석해줘: " + coins + "\n\n" +
-               "결과는 무조건 아래 JSON 배열 포맷으로만 응답해야 해. 다른 부연 설명이나 텍스트는 절대 넣지마.\n" +
+        return "너는 최고 수준의 가상화폐 퀀트 애널리스트야. " +
+               "다음 " + markets.size() + "개의 코인에 대한 실시간 업비트 Ticker 데이터 JSON을 바탕으로 분석해줘.\n" +
+               "데이터 내의 'trade_price'(현재가), 'signed_change_rate'(24시간 등락률), 'acc_trade_price_24h'(24시간 누적 거래대금) 등을 심층 분석해.\n\n" +
+               "실시간 데이터: " + rawTickerJson + "\n\n" +
+               "결과는 무조건 아래 JSON 배열 포맷으로만 응답해야 해. 다른 부연 설명이나 마크다운 텍스트는 절대 넣지마.\n" +
                "[\n" +
                "  {\n" +
                "    \"market\": \"코인 티커(예: KRW-BTC)\",\n" +
-               "    \"score\": 0~100 사이의 방향성 점수 (0: 초강력 악재/폭락 예상, 50: 중립, 100: 초강력 호재/폭등 예상),\n" +
-               "    \"summary\": \"분석에 대한 3줄짜리 한국어 핵심 요약\",\n" +
-               "    \"theme\": \"이 코인의 성격에 따라 SAFE(우량), HIGH_RISK(고위험), TRENDING(트렌딩), VALUE(저가매수/고잠재력) 중 하나만 입력\"\n" +
+               "    \"score\": 0~100 사이의 방향성 점수 (거래량과 등락률 기반 분석. 0: 초강력 악재/폭락 예상, 50: 중립, 100: 거래량 동반 강력 상승 예상),\n" +
+               "    \"summary\": \"이 코인의 실시간 데이터를 바탕으로 한 3줄짜리 핵심 요약\",\n" +
+               "    \"theme\": \"이 코인의 성격에 따라 SAFE(우량), HIGH_RISK(고위험), TRENDING(거래량 폭발 트렌딩), VALUE(저가매수/고잠재력) 중 하나만 입력\"\n" +
                "  }\n" +
                "]\n\n" +
                "반드시 위 포맷을 지킨 JSON 배열(`[...]`) 텍스트만 출력해.";
