@@ -937,17 +937,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 외부(coinList.js)에서 코인을 클릭했을 때 호출할 수 있는 전역 함수
     window.changeMarket = async function(marketCode, koreanName) {
-        if (currentMarket === marketCode) return;
-        
-        currentMarket = marketCode;
-        
-        // 1. 차트 내부 레전드 정보 업데이트
+        // 1. 차트 내부 레전드 정보 업데이트 (값이 같더라도 라벨 업데이트는 진행 - 초기 로드 버그 방지)
         const legendTitle = document.getElementById('legend-title');
         const legendTf = document.getElementById('legend-tf');
         if (legendTitle) {
             const tfText = legendTf ? legendTf.innerText : '1분';
             legendTitle.innerHTML = `${koreanName} (${marketCode}) <span id="legend-tf">${tfText}</span>`;
         }
+
+        if (currentMarket === marketCode && window.isChartInitialized) return;
+        
+        currentMarket = marketCode;
+        window.isChartInitialized = true;
         
         // 2. 차트 기존 데이터 비우기 (로딩 체감)
         candlestickSeries.setData([]);
